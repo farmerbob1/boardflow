@@ -71,6 +71,33 @@ com.boardflow/
 
 Board data is saved to `ProjectSettings/BoardFlow/boardflow-data.json` as pretty-printed JSON. This location is version-control friendly and shareable across a team without requiring Unity's AssetDatabase.
 
+## Roadmap (v2)
+
+### High Value
+- [ ] Task descriptions - Multi-line body/notes field beyond just the title
+- [ ] Labels/tags - Color-coded tags for categorizing tasks (e.g., "Bug", "Feature", "Art") with filtering
+- [ ] Column WIP limits - Max task count per column with visual warning when exceeded
+- [ ] Due dates - Date field on tasks with overdue highlighting
+- [ ] Board templates - Preset column layouts (Scrum, Bug Triage, Art Pipeline, etc.) when creating a new board
+
+### Quality of Life
+- [ ] Card expand/detail view - Click to open a larger popup for editing everything in one place
+- [ ] Collapse columns - Minimize columns you don't need to see right now
+- [ ] Virtual scrolling - Card count limits on scroll for boards with 100+ cards
+- [ ] Import/export - CSV or Trello JSON import so teams can migrate existing boards
+- [ ] Multiple selection - Shift/Ctrl+click to select multiple cards for bulk move or delete
+
+### Visual Polish
+- [ ] Card color/cover - Background color or colored stripe per card
+- [ ] Assignee avatars - Assign team members to tasks pulled from project contributors
+- [ ] Swimlanes - Horizontal grouping rows within the board (by priority, assignee, etc.)
+- [ ] Column sorting - Sort cards by priority, date created, or alphabetical
+
+### Power User
+- [ ] Board-level statistics - Small dashboard showing cards per column, completion rate, velocity
+- [ ] Notification dot on menu item - Show when tasks are overdue
+- [ ] Custom fields - User-defined key/value pairs on cards for project-specific data
+
 ## Requirements
 
 - Unity 6 (6000.0) or later

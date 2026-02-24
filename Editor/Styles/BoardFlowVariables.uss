@@ -1,0 +1,52 @@
+:root {
+    /* Background colors */
+    --bf-bg-primary: #1e1e1e;
+    --bf-bg-secondary: #252526;
+    --bf-bg-tertiary: #2d2d30;
+    --bf-bg-surface: #333337;
+    --bf-bg-hover: #3e3e42;
+    --bf-bg-active: #094771;
+
+    /* Text colors */
+    --bf-text-primary: #cccccc;
+    --bf-text-secondary: #9e9e9e;
+    --bf-text-muted: #6e6e6e;
+    --bf-text-bright: #ffffff;
+
+    /* Accent / brand */
+    --bf-accent: #0078d4;
+    --bf-accent-hover: #1a8ae8;
+    --bf-accent-light: rgba(0, 120, 212, 0.3);
+
+    /* Priority colors */
+    --bf-priority-critical: #e74c3c;
+    --bf-priority-high: #e67e22;
+    --bf-priority-medium: #f1c40f;
+    --bf-priority-low: #2ecc71;
+    --bf-priority-none: transparent;
+
+    /* Borders */
+    --bf-border-color: #3e3e42;
+    --bf-border-focus: #0078d4;
+    --bf-border-radius: 6px;
+    --bf-border-radius-sm: 4px;
+
+    /* Spacing */
+    --bf-spacing-xs: 2px;
+    --bf-spacing-sm: 4px;
+    --bf-spacing-md: 8px;
+    --bf-spacing-lg: 12px;
+    --bf-spacing-xl: 16px;
+
+    /* Sizing */
+    --bf-column-width: 280px;
+    --bf-card-min-height: 40px;
+    --bf-toolbar-height: 36px;
+
+    /* Shadows / depth */
+    --bf-shadow-color: rgba(0, 0, 0, 0.3);
+
+    /* Transitions */
+    --bf-transition-fast: 0.1s;
+    --bf-transition-normal: 0.2s;
+}

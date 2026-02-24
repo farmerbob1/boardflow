@@ -1,0 +1,54 @@
+/* Drag ghost */
+.drag-ghost {
+    background-color: var(--bf-bg-surface);
+    border-radius: var(--bf-border-radius);
+    border-width: 2px;
+    border-color: var(--bf-accent);
+    opacity: 0.85;
+    padding: var(--bf-spacing-md);
+}
+
+.drag-ghost-title {
+    font-size: 12px;
+    color: var(--bf-text-primary);
+    white-space: normal;
+}
+
+/* Card being dragged (dimmed) */
+.card-dragging {
+    opacity: 0.3;
+}
+
+/* Drop indicator (cards) */
+.drop-indicator {
+    height: 3px;
+    background-color: var(--bf-accent);
+    border-radius: 2px;
+    margin: 2px 4px;
+    flex-shrink: 0;
+}
+
+/* Column drag ghost */
+.drag-ghost-column {
+    background-color: var(--bf-bg-secondary);
+    border-radius: var(--bf-border-radius);
+    border-width: 2px;
+    border-color: var(--bf-accent);
+    opacity: 0.8;
+}
+
+/* Column being dragged (dimmed) */
+.column-dragging {
+    opacity: 0.3;
+}
+
+/* Column drop indicator (vertical bar) */
+.column-drop-indicator {
+    width: 3px;
+    min-width: 3px;
+    background-color: var(--bf-accent);
+    border-radius: 2px;
+    margin: 0 4px;
+    align-self: stretch;
+    flex-shrink: 0;
+}

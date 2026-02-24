@@ -1,0 +1,25 @@
+.boardflow-root {
+    flex-grow: 1;
+    background-color: var(--bf-bg-primary);
+    color: var(--bf-text-primary);
+}
+
+.boardflow-status {
+    padding: 20px;
+    font-size: 14px;
+    color: var(--bf-text-secondary);
+    -unity-text-align: middle-center;
+}
+
+.boardflow-empty-state {
+    flex-grow: 1;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+}
+
+.boardflow-empty-state Label {
+    font-size: 16px;
+    color: var(--bf-text-muted);
+    margin-bottom: 12px;
+}

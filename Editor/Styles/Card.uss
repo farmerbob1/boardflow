@@ -73,6 +73,23 @@
     flex-grow: 1;
 }
 
+/* Description preview */
+.task-card-description {
+    font-size: 11px;
+    color: var(--bf-text-secondary);
+    white-space: normal;
+    overflow: hidden;
+    margin-bottom: var(--bf-spacing-sm);
+    -unity-text-overflow-position: end;
+}
+
+/* Label chips row */
+.task-card-labels {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-bottom: var(--bf-spacing-sm);
+}
+
 /* Checklist section */
 .task-card-checklist-section {
     margin-top: var(--bf-spacing-sm);

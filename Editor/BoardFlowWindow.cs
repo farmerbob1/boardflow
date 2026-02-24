@@ -56,6 +56,8 @@ namespace BoardFlow.Editor
             AddStyleSheet("Column");
             AddStyleSheet("Card");
             AddStyleSheet("DragDrop");
+            AddStyleSheet("Label");
+            AddStyleSheet("CardDetail");
 
             rootVisualElement.AddToClassList("boardflow-root");
 
@@ -66,6 +68,7 @@ namespace BoardFlow.Editor
             m_Toolbar.OnRenameBoardClicked += OnRenameBoard;
             m_Toolbar.OnDeleteBoardClicked += OnDeleteBoard;
             m_Toolbar.OnAddColumnClicked += OnAddColumn;
+            m_Toolbar.OnLabelsClicked += OnLabelsManager;
             m_Toolbar.OnGridSettingsClicked += OnGridSettings;
             m_Toolbar.OnSearchChanged += OnSearchChanged;
             rootVisualElement.Add(m_Toolbar);
@@ -119,6 +122,7 @@ namespace BoardFlow.Editor
                     var card = cards[i];
                     card.OnContextMenu += OnCardContextMenu;
                     card.OnTitleDoubleClicked += BeginEditCardTitle;
+                    card.OnCardClicked += OnCardClicked;
                     card.OnChecklistToggled += OnChecklistToggled;
                     card.OnChecklistTextChanged += OnChecklistTextChanged;
 
@@ -246,6 +250,15 @@ namespace BoardFlow.Editor
             RebuildBoard();
         }
 
+        void OnLabelsManager()
+        {
+            var data = BoardFlowDataService.Data;
+            var board = data.GetActiveBoard();
+            if (board == null) return;
+
+            LabelManagerPopup.Show(board.id, () => RebuildBoard());
+        }
+
         void OnGridSettings()
         {
             GridSettingsPopup.Show(BoardFlowDataService.Data.gridSettings, settings =>
@@ -262,6 +275,15 @@ namespace BoardFlow.Editor
         }
 
         // --- Card events ---
+
+        void OnCardClicked(TaskCardElement card)
+        {
+            var data = BoardFlowDataService.Data;
+            var board = data.GetActiveBoard();
+            if (board == null) return;
+
+            CardDetailWindow.Show(board.id, card.TaskId, () => RebuildBoard());
+        }
 
         void OnAddTask(string columnId)
         {
@@ -292,10 +314,37 @@ namespace BoardFlow.Editor
             menu.AddSeparator("");
 
             menu.AddItem(new GUIContent("Edit Title"), false, () => BeginEditCardTitle(card));
+            menu.AddItem(new GUIContent("Open Details"), false, () => OnCardClicked(card));
             menu.AddItem(new GUIContent("Add Checklist Item"), false, () => AddChecklistItemToCard(card));
 
-            // Checklist item management
+            // Labels submenu
             var (cardCol, cardTask) = BoardFlowDataService.FindTaskAcrossColumns(board.id, card.TaskId);
+            if (cardTask != null && board.labels.Count > 0)
+            {
+                menu.AddSeparator("");
+                for (int i = 0; i < board.labels.Count; i++)
+                {
+                    var label = board.labels[i];
+                    var colId = cardCol.id;
+                    bool hasLabel = cardTask.labelIds.Contains(label.id);
+                    menu.AddItem(new GUIContent($"Labels/{label.name}"), hasLabel, () =>
+                    {
+                        if (hasLabel)
+                        {
+                            UndoService.RecordState("Remove Label");
+                            BoardFlowDataService.RemoveLabelFromTask(board.id, colId, card.TaskId, label.id);
+                        }
+                        else
+                        {
+                            UndoService.RecordState("Add Label");
+                            BoardFlowDataService.AddLabelToTask(board.id, colId, card.TaskId, label.id);
+                        }
+                        RebuildBoard();
+                    });
+                }
+            }
+
+            // Checklist item management
             if (cardTask != null && cardTask.checklist.Count > 0)
             {
                 menu.AddSeparator("");

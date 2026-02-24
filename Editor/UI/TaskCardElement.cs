@@ -17,10 +17,14 @@ namespace BoardFlow.Editor.UI
 
         public event Action<TaskCardElement> OnContextMenu;
         public event Action<TaskCardElement> OnTitleDoubleClicked;
+        public event Action<TaskCardElement> OnCardClicked;
         public event Action<string, string, bool> OnChecklistToggled;
         public event Action<string, string, string> OnChecklistTextChanged;
 
-        public TaskCardElement(TaskCardData data, string columnId)
+        IVisualElementScheduledItem m_ClickTimer;
+        bool m_DoubleClicked;
+
+        public TaskCardElement(TaskCardData data, string columnId, List<LabelData> boardLabels)
         {
             AddToClassList("task-card");
             TaskId = data.id;
@@ -47,12 +51,34 @@ namespace BoardFlow.Editor.UI
 
             m_TitleLabel = new Label(data.title);
             m_TitleLabel.AddToClassList("task-card-title");
-            m_TitleLabel.RegisterCallback<ClickEvent>(evt =>
-            {
-                if (evt.clickCount == 2)
-                    OnTitleDoubleClicked?.Invoke(this);
-            });
+            m_TitleLabel.RegisterCallback<ClickEvent>(OnTitleClicked);
             titleRow.Add(m_TitleLabel);
+
+            // Description preview (truncated, max 2 lines)
+            if (!string.IsNullOrEmpty(data.description))
+            {
+                var descPreview = new Label(TruncateDescription(data.description, 80));
+                descPreview.AddToClassList("task-card-description");
+                body.Add(descPreview);
+            }
+
+            // Label chips row
+            if (boardLabels != null && data.labelIds != null && data.labelIds.Count > 0)
+            {
+                var labelsRow = new VisualElement();
+                labelsRow.AddToClassList("task-card-labels");
+                body.Add(labelsRow);
+
+                for (int i = 0; i < data.labelIds.Count; i++)
+                {
+                    var labelData = FindLabelById(boardLabels, data.labelIds[i]);
+                    if (labelData != null)
+                    {
+                        var chip = new LabelChipElement(labelData);
+                        labelsRow.Add(chip);
+                    }
+                }
+            }
 
             // Checklist section
             if (data.checklist != null && data.checklist.Count > 0)
@@ -106,6 +132,28 @@ namespace BoardFlow.Editor.UI
             }));
         }
 
+        void OnTitleClicked(ClickEvent evt)
+        {
+            if (evt.clickCount == 2)
+            {
+                m_DoubleClicked = true;
+                m_ClickTimer?.Pause();
+                OnTitleDoubleClicked?.Invoke(this);
+                return;
+            }
+
+            if (evt.clickCount == 1)
+            {
+                m_DoubleClicked = false;
+                m_ClickTimer = schedule.Execute(() =>
+                {
+                    if (!m_DoubleClicked)
+                        OnCardClicked?.Invoke(this);
+                });
+                m_ClickTimer.ExecuteLater(300);
+            }
+        }
+
         public void SetTitle(string title)
         {
             m_TitleLabel.text = title;
@@ -114,6 +162,24 @@ namespace BoardFlow.Editor.UI
         public void SetPriority(Priority priority)
         {
             m_PriorityBar.SetPriority(priority);
+        }
+
+        static string TruncateDescription(string text, int maxLength)
+        {
+            if (string.IsNullOrEmpty(text)) return text;
+            // Replace newlines for preview
+            var flat = text.Replace("\n", " ").Replace("\r", "");
+            return flat.Length <= maxLength ? flat : flat.Substring(0, maxLength) + "...";
+        }
+
+        static LabelData FindLabelById(List<LabelData> labels, string id)
+        {
+            for (int i = 0; i < labels.Count; i++)
+            {
+                if (labels[i].id == id)
+                    return labels[i];
+            }
+            return null;
         }
     }
 }

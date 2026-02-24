@@ -1,0 +1,130 @@
+/* Card detail window root */
+.card-detail-root {
+    padding: var(--bf-spacing-xl);
+    background-color: var(--bf-bg-primary);
+    flex-grow: 1;
+}
+
+/* Section layout */
+.card-detail-section {
+    margin-bottom: var(--bf-spacing-lg);
+}
+
+.card-detail-section-header {
+    font-size: 11px;
+    color: var(--bf-text-muted);
+    -unity-font-style: bold;
+    margin-bottom: var(--bf-spacing-sm);
+    letter-spacing: 1px;
+}
+
+/* Title field */
+.card-detail-title .unity-text-field__input {
+    background-color: var(--bf-bg-tertiary);
+    border-color: var(--bf-border-color);
+    border-radius: var(--bf-border-radius-sm);
+    color: var(--bf-text-bright);
+    font-size: 16px;
+    padding: 6px 8px;
+    min-height: 28px;
+    -unity-font-style: bold;
+}
+
+.card-detail-title .unity-text-field__input:focus {
+    border-color: var(--bf-border-focus);
+}
+
+/* Priority field */
+.card-detail-priority {
+    margin-top: var(--bf-spacing-sm);
+}
+
+/* Labels section */
+.card-detail-labels-container {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-top: var(--bf-spacing-sm);
+}
+
+.card-detail-label-toggle {
+    cursor: link;
+    margin-right: var(--bf-spacing-sm);
+    margin-bottom: var(--bf-spacing-sm);
+}
+
+/* Description field */
+.card-detail-description .unity-text-field__input {
+    background-color: var(--bf-bg-tertiary);
+    border-color: var(--bf-border-color);
+    border-radius: var(--bf-border-radius-sm);
+    color: var(--bf-text-primary);
+    font-size: 12px;
+    padding: 6px 8px;
+    min-height: 80px;
+    white-space: normal;
+}
+
+.card-detail-description .unity-text-field__input:focus {
+    border-color: var(--bf-border-focus);
+}
+
+/* Checklist section */
+.card-detail-checklist-item {
+    flex-direction: row;
+    align-items: center;
+    padding: 2px 0;
+    margin-bottom: var(--bf-spacing-xs);
+}
+
+.card-detail-checklist-toggle {
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.card-detail-checklist-text {
+    flex-grow: 1;
+    margin-left: var(--bf-spacing-sm);
+    margin-right: var(--bf-spacing-sm);
+}
+
+.card-detail-checklist-text .unity-text-field__input {
+    background-color: var(--bf-bg-tertiary);
+    border-color: var(--bf-border-color);
+    border-radius: var(--bf-border-radius-sm);
+    color: var(--bf-text-primary);
+    font-size: 12px;
+    padding: 2px 6px;
+    min-height: 20px;
+}
+
+.card-detail-checklist-text .unity-text-field__input:focus {
+    border-color: var(--bf-border-focus);
+}
+
+.card-detail-checklist-delete {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+    flex-shrink: 0;
+    background-color: transparent;
+    border-width: 0;
+    color: var(--bf-text-muted);
+}
+
+.card-detail-checklist-delete:hover {
+    color: var(--bf-priority-critical);
+}
+
+.card-detail-add-item {
+    margin-top: var(--bf-spacing-sm);
+    background-color: var(--bf-bg-tertiary);
+    border-color: var(--bf-border-color);
+    border-radius: var(--bf-border-radius-sm);
+    color: var(--bf-text-secondary);
+    padding: 4px 8px;
+}
+
+.card-detail-add-item:hover {
+    color: var(--bf-text-primary);
+    background-color: var(--bf-bg-hover);
+}

@@ -30,12 +30,37 @@ namespace BoardFlow.Editor.Services
                 s_Data = JsonUtility.FromJson<BoardFlowData>(json);
                 if (s_Data == null)
                     s_Data = new BoardFlowData();
+                MigrateNullFields();
             }
             else
             {
                 s_Data = new BoardFlowData();
                 CreateDefaultBoard();
                 Save();
+            }
+        }
+
+        static void MigrateNullFields()
+        {
+            for (int b = 0; b < s_Data.boards.Count; b++)
+            {
+                var board = s_Data.boards[b];
+                if (board.labels == null)
+                    board.labels = new List<LabelData>();
+
+                for (int c = 0; c < board.columns.Count; c++)
+                {
+                    for (int t = 0; t < board.columns[c].tasks.Count; t++)
+                    {
+                        var task = board.columns[c].tasks[t];
+                        if (task.description == null)
+                            task.description = string.Empty;
+                        if (task.labelIds == null)
+                            task.labelIds = new List<string>();
+                        if (task.checklist == null)
+                            task.checklist = new List<ChecklistItemData>();
+                    }
+                }
             }
         }
 
@@ -244,6 +269,105 @@ namespace BoardFlow.Editor.Services
             task.Touch();
             FindBoard(boardId)?.Touch();
             Save();
+        }
+
+        // --- Task Description ---
+
+        public static void UpdateTaskDescription(string boardId, string columnId, string taskId, string newDescription)
+        {
+            var task = FindTask(boardId, columnId, taskId);
+            if (task != null)
+            {
+                task.description = newDescription ?? string.Empty;
+                task.Touch();
+                FindBoard(boardId)?.Touch();
+                Save();
+            }
+        }
+
+        // --- Label CRUD ---
+
+        public static LabelData CreateLabel(string boardId, string name, string color)
+        {
+            var board = FindBoard(boardId);
+            if (board == null) return null;
+
+            var label = new LabelData(name, color);
+            board.labels.Add(label);
+            board.Touch();
+            Save();
+            return label;
+        }
+
+        public static void UpdateLabel(string boardId, string labelId, string newName, string newColor)
+        {
+            var label = FindLabel(boardId, labelId);
+            if (label != null)
+            {
+                label.name = newName;
+                label.color = newColor;
+                FindBoard(boardId)?.Touch();
+                Save();
+            }
+        }
+
+        public static void DeleteLabel(string boardId, string labelId)
+        {
+            var board = FindBoard(boardId);
+            if (board == null) return;
+
+            board.labels.RemoveAll(l => l.id == labelId);
+
+            // Remove from all tasks
+            for (int c = 0; c < board.columns.Count; c++)
+            {
+                for (int t = 0; t < board.columns[c].tasks.Count; t++)
+                {
+                    board.columns[c].tasks[t].labelIds.RemoveAll(id => id == labelId);
+                }
+            }
+
+            board.Touch();
+            Save();
+        }
+
+        public static LabelData FindLabel(string boardId, string labelId)
+        {
+            var board = FindBoard(boardId);
+            if (board == null) return null;
+            for (int i = 0; i < board.labels.Count; i++)
+            {
+                if (board.labels[i].id == labelId)
+                    return board.labels[i];
+            }
+            return null;
+        }
+
+        public static void AddLabelToTask(string boardId, string columnId, string taskId, string labelId)
+        {
+            var task = FindTask(boardId, columnId, taskId);
+            if (task == null) return;
+
+            if (!task.labelIds.Contains(labelId))
+            {
+                task.labelIds.Add(labelId);
+                task.Touch();
+                FindBoard(boardId)?.Touch();
+                Save();
+            }
+        }
+
+        public static void RemoveLabelFromTask(string boardId, string columnId, string taskId, string labelId)
+        {
+            var task = FindTask(boardId, columnId, taskId);
+            if (task == null) return;
+
+            if (task.labelIds.Remove(labelId))
+            {
+                task.Touch();
+                FindBoard(boardId)?.Touch();
+                Save();
+            }
         }
 
         // --- Move operations ---

@@ -12,6 +12,7 @@ namespace BoardFlow.Editor.UI
         readonly List<ColumnElement> m_Columns = new List<ColumnElement>();
 
         string m_BoardId;
+        BoardData m_Board;
 
         public string BoardId => m_BoardId;
         public IReadOnlyList<ColumnElement> Columns => m_Columns;
@@ -39,16 +40,17 @@ namespace BoardFlow.Editor.UI
             if (board == null) return;
 
             m_BoardId = board.id;
+            m_Board = board;
 
             for (int i = 0; i < board.columns.Count; i++)
             {
-                AddColumnElement(board.columns[i], board.id);
+                AddColumnElement(board.columns[i], board.id, board.labels);
             }
         }
 
-        void AddColumnElement(ColumnData data, string boardId)
+        void AddColumnElement(ColumnData data, string boardId, List<LabelData> boardLabels)
         {
-            var column = new ColumnElement(data, boardId);
+            var column = new ColumnElement(data, boardId, boardLabels);
             column.OnAddTaskClicked += colId => OnAddTaskClicked?.Invoke(colId);
             column.OnContextMenu += col => OnColumnContextMenu?.Invoke(col);
 
@@ -82,9 +84,42 @@ namespace BoardFlow.Editor.UI
                     }
                     else
                     {
-                        // Check card visibility - we store title in the label
+                        bool visible = false;
+
+                        // Match title
                         var titleLabel = cards[t].Q<Label>(className: "task-card-title");
-                        bool visible = titleLabel != null && titleLabel.text.ToLowerInvariant().Contains(lower);
+                        if (titleLabel != null && titleLabel.text.ToLowerInvariant().Contains(lower))
+                            visible = true;
+
+                        // Match description preview
+                        if (!visible)
+                        {
+                            var descLabel = cards[t].Q<Label>(className: "task-card-description");
+                            if (descLabel != null && descLabel.text.ToLowerInvariant().Contains(lower))
+                                visible = true;
+                        }
+
+                        // Match label names via data
+                        if (!visible && m_Board != null)
+                        {
+                            var labelsRow = cards[t].Q(className: "task-card-labels");
+                            if (labelsRow != null)
+                            {
+                                foreach (var child in labelsRow.Children())
+                                {
+                                    if (child is LabelChipElement chip)
+                                    {
+                                        var chipText = chip.Q<Label>(className: "label-chip-text");
+                                        if (chipText != null && chipText.text.ToLowerInvariant().Contains(lower))
+                                        {
+                                            visible = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         cards[t].style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
                     }
                 }

@@ -11,6 +11,7 @@ namespace BoardFlow.Editor.UI
         readonly Button m_NewBoardButton;
         readonly Button m_AddColumnButton;
         readonly Button m_GridSettingsButton;
+        readonly Button m_LabelsButton;
         readonly TextField m_SearchField;
 
         public event Action<string> OnBoardSelected;
@@ -18,6 +19,7 @@ namespace BoardFlow.Editor.UI
         public event Action OnRenameBoardClicked;
         public event Action OnDeleteBoardClicked;
         public event Action OnAddColumnClicked;
+        public event Action OnLabelsClicked;
         public event Action OnGridSettingsClicked;
         public event Action<string> OnSearchChanged;
 
@@ -62,6 +64,12 @@ namespace BoardFlow.Editor.UI
             m_AddColumnButton.tooltip = "Add Column";
             m_AddColumnButton.AddToClassList("toolbar-button");
             leftSection.Add(m_AddColumnButton);
+
+            m_LabelsButton = new Button(() => OnLabelsClicked?.Invoke());
+            m_LabelsButton.text = "Labels";
+            m_LabelsButton.tooltip = "Manage Labels";
+            m_LabelsButton.AddToClassList("toolbar-button");
+            leftSection.Add(m_LabelsButton);
 
             // Right section
             var rightSection = new VisualElement();

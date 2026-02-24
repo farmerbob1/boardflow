@@ -19,7 +19,7 @@ namespace BoardFlow.Editor.UI
         public event Action<ColumnElement> OnContextMenu;
         public event Action<ColumnElement> OnTitleDoubleClicked;
 
-        public ColumnElement(ColumnData data, string boardId)
+        public ColumnElement(ColumnData data, string boardId, List<LabelData> boardLabels)
         {
             AddToClassList("column");
             ColumnId = data.id;
@@ -68,7 +68,7 @@ namespace BoardFlow.Editor.UI
             // Add task cards
             for (int i = 0; i < data.tasks.Count; i++)
             {
-                var card = new TaskCardElement(data.tasks[i], data.id);
+                var card = new TaskCardElement(data.tasks[i], data.id, boardLabels);
                 m_CardContainer.Add(card);
             }
 

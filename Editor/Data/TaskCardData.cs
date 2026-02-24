@@ -8,8 +8,10 @@ namespace BoardFlow.Editor.Data
     {
         public string id;
         public string title;
+        public string description;
         public Priority priority;
         public List<ChecklistItemData> checklist;
+        public List<string> labelIds;
         public long createdAt;
         public long modifiedAt;
 
@@ -17,8 +19,10 @@ namespace BoardFlow.Editor.Data
         {
             id = Guid.NewGuid().ToString("N");
             title = "New Task";
+            description = string.Empty;
             priority = Priority.None;
             checklist = new List<ChecklistItemData>();
+            labelIds = new List<string>();
             createdAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             modifiedAt = createdAt;
         }

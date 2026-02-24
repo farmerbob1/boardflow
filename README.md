@@ -8,12 +8,14 @@ A Kanban-style project task tracker built directly into the Unity Editor. Keep y
 
 - **Multiple Boards** - Create and switch between separate boards for different workflows
 - **Customizable Columns** - Add, rename, reorder, and delete columns to match your process
-- **Task Cards** - Create tasks with editable titles, priority levels, and checklists
+- **Task Cards** - Create tasks with editable titles, descriptions, priority levels, and checklists
+- **Labels/Tags** - Color-coded board-level labels for categorizing tasks, assignable via context menu or detail view
+- **Card Detail View** - Click a card to open a full editing window with title, priority, labels, description, and checklist
 - **Drag & Drop** - Reorder cards within and across columns, and reorder columns themselves
 - **Priority Levels** - None, Low, Medium, High, and Critical with colored indicator bars
 - **Checklists** - Add checklist items to tasks with toggleable checkboxes and progress bars
 - **Inline Editing** - Double-click any title or checklist item to edit in place
-- **Search & Filter** - Filter cards in real-time across all columns
+- **Search & Filter** - Filter cards in real-time across all columns by title, description, or label name
 - **Undo/Redo** - Full integration with Unity's Ctrl+Z / Ctrl+Y
 - **Persistent Data** - Saved as JSON in `ProjectSettings/BoardFlow/`, version-control friendly
 - **Dark Theme** - Styled to match the Unity editor skin
@@ -44,9 +46,11 @@ Open the board from the menu: **Window > BoardFlow**
 
 ### Editing
 
+- **Single-click** a card to open the detail view for full editing (title, priority, labels, description, checklist)
 - **Double-click** a column title, task title, or checklist item to edit it inline
 - **Right-click** a column header for rename/delete options
-- **Right-click** a task card to set priority, edit title, manage checklist items, or delete
+- **Right-click** a task card to set priority, assign labels, edit title, manage checklist items, or delete
+- Use the **Labels** toolbar button to create, edit, and delete board-level labels
 
 ### Drag & Drop
 
@@ -74,14 +78,14 @@ Board data is saved to `ProjectSettings/BoardFlow/boardflow-data.json` as pretty
 ## Roadmap (v2)
 
 ### High Value
-- [ ] Task descriptions - Multi-line body/notes field beyond just the title
-- [ ] Labels/tags - Color-coded tags for categorizing tasks (e.g., "Bug", "Feature", "Art") with filtering
+- [x] Task descriptions - Multi-line body/notes field beyond just the title
+- [x] Labels/tags - Color-coded tags for categorizing tasks (e.g., "Bug", "Feature", "Art") with filtering
 - [ ] Column WIP limits - Max task count per column with visual warning when exceeded
 - [ ] Due dates - Date field on tasks with overdue highlighting
 - [ ] Board templates - Preset column layouts (Scrum, Bug Triage, Art Pipeline, etc.) when creating a new board
 
 ### Quality of Life
-- [ ] Card expand/detail view - Click to open a larger popup for editing everything in one place
+- [x] Card expand/detail view - Click to open a larger popup for editing everything in one place
 - [ ] Collapse columns - Minimize columns you don't need to see right now
 - [ ] Virtual scrolling - Card count limits on scroll for boards with 100+ cards
 - [ ] Import/export - CSV or Trello JSON import so teams can migrate existing boards

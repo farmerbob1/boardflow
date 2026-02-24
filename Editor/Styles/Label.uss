@@ -1,0 +1,30 @@
+/* Label chip */
+.label-chip {
+    flex-direction: row;
+    align-items: center;
+    padding: 1px 6px;
+    border-radius: 8px;
+    margin-right: var(--bf-spacing-xs);
+    margin-bottom: var(--bf-spacing-xs);
+    height: 16px;
+}
+
+.label-chip-text {
+    font-size: 10px;
+    color: #ffffff;
+    -unity-font-style: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Inactive state for toggleable chips in detail view */
+.label-chip--inactive {
+    opacity: 0.35;
+    border-width: 1px;
+    border-color: var(--bf-border-color);
+}
+
+.label-chip--inactive .label-chip-text {
+    color: var(--bf-text-secondary);
+}

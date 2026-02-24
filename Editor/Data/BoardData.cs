@@ -9,6 +9,7 @@ namespace BoardFlow.Editor.Data
         public string id;
         public string name;
         public List<ColumnData> columns;
+        public List<LabelData> labels;
         public long createdAt;
         public long modifiedAt;
 
@@ -17,6 +18,7 @@ namespace BoardFlow.Editor.Data
             id = Guid.NewGuid().ToString("N");
             name = "New Board";
             columns = new List<ColumnData>();
+            labels = new List<LabelData>();
             createdAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             modifiedAt = createdAt;
         }

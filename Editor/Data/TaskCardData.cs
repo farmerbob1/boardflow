@@ -12,6 +12,8 @@ namespace BoardFlow.Editor.Data
         public Priority priority;
         public List<ChecklistItemData> checklist;
         public List<string> labelIds;
+        public string color;
+        public CardColorMode colorMode;
         public long createdAt;
         public long modifiedAt;
 
@@ -23,6 +25,8 @@ namespace BoardFlow.Editor.Data
             priority = Priority.None;
             checklist = new List<ChecklistItemData>();
             labelIds = new List<string>();
+            color = string.Empty;
+            colorMode = CardColorMode.None;
             createdAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             modifiedAt = createdAt;
         }

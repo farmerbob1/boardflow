@@ -41,6 +41,17 @@
     background-color: var(--bf-priority-critical);
 }
 
+/* Card color stripe */
+.card-color-stripe {
+    height: 6px;
+    width: 100%;
+    flex-shrink: 0;
+}
+
+.card-color-stripe--hidden {
+    height: 0;
+}
+
 /* Card body */
 .task-card-body {
     padding: var(--bf-spacing-md);

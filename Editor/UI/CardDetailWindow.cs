@@ -129,6 +129,85 @@ namespace BoardFlow.Editor.UI
             });
             prioritySection.Add(m_PriorityField);
 
+            // --- Color ---
+            var colorSection = new VisualElement();
+            colorSection.AddToClassList("card-detail-section");
+            root.Add(colorSection);
+
+            var colorHeader = new Label("COLOR");
+            colorHeader.AddToClassList("card-detail-section-header");
+            colorSection.Add(colorHeader);
+
+            var colorRow = new VisualElement();
+            colorRow.AddToClassList("card-detail-color-row");
+            colorSection.Add(colorRow);
+
+            // Color picker via IMGUIContainer
+            Color currentColor;
+            if (!string.IsNullOrEmpty(task.color) && ColorUtility.TryParseHtmlString(task.color, out currentColor))
+            { }
+            else
+                currentColor = Color.white;
+
+            Color pickerColor = currentColor;
+            var colorPicker = new IMGUIContainer(() =>
+            {
+                var newColor = EditorGUILayout.ColorField(GUIContent.none, pickerColor, false, false, false, GUILayout.Width(36), GUILayout.Height(20));
+                if (newColor != pickerColor)
+                {
+                    pickerColor = newColor;
+                    string hex = "#" + ColorUtility.ToHtmlStringRGB(newColor);
+                    var (c2, t2) = GetTask();
+                    if (t2 != null)
+                    {
+                        var mode = t2.colorMode;
+                        if (mode == CardColorMode.None)
+                            mode = CardColorMode.Stripe;
+                        UndoService.RecordState("Set Card Color");
+                        BoardFlowDataService.SetTaskColor(m_BoardId, c2.id, m_TaskId, hex, mode);
+                        m_OnChanged?.Invoke();
+                        BuildContent();
+                    }
+                }
+            });
+            colorPicker.AddToClassList("card-detail-color-field");
+            colorRow.Add(colorPicker);
+
+            // Mode dropdown
+            var modeField = new EnumField(task.colorMode);
+            modeField.AddToClassList("card-detail-color-mode");
+            modeField.RegisterValueChangedCallback(evt =>
+            {
+                var (c2, t2) = GetTask();
+                if (t2 == null) return;
+                var newMode = (CardColorMode)evt.newValue;
+                if (newMode != t2.colorMode)
+                {
+                    var colorVal = t2.color;
+                    if (string.IsNullOrEmpty(colorVal) && newMode != CardColorMode.None)
+                        colorVal = "#3498db";
+                    UndoService.RecordState("Set Card Color Mode");
+                    BoardFlowDataService.SetTaskColor(m_BoardId, c2.id, m_TaskId, colorVal, newMode);
+                    m_OnChanged?.Invoke();
+                    BuildContent();
+                }
+            });
+            colorRow.Add(modeField);
+
+            // Clear button
+            var clearColorBtn = new Button(() =>
+            {
+                var (c2, t2) = GetTask();
+                if (t2 == null) return;
+                UndoService.RecordState("Clear Card Color");
+                BoardFlowDataService.SetTaskColor(m_BoardId, c2.id, m_TaskId, string.Empty, CardColorMode.None);
+                m_OnChanged?.Invoke();
+                BuildContent();
+            });
+            clearColorBtn.text = "Clear Color";
+            clearColorBtn.AddToClassList("card-detail-color-clear");
+            colorSection.Add(clearColorBtn);
+
             // --- Labels ---
             var labelsSection = new VisualElement();
             labelsSection.AddToClassList("card-detail-section");

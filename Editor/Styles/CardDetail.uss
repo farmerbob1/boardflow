@@ -128,3 +128,36 @@
     color: var(--bf-text-primary);
     background-color: var(--bf-bg-hover);
 }
+
+/* Color section */
+.card-detail-color-row {
+    flex-direction: row;
+    align-items: center;
+    margin-top: var(--bf-spacing-sm);
+}
+
+.card-detail-color-field {
+    width: 40px;
+    height: 24px;
+    flex-shrink: 0;
+    margin-right: var(--bf-spacing-sm);
+}
+
+.card-detail-color-mode {
+    flex-grow: 1;
+    margin-right: var(--bf-spacing-sm);
+}
+
+.card-detail-color-clear {
+    margin-top: var(--bf-spacing-sm);
+    background-color: var(--bf-bg-tertiary);
+    border-color: var(--bf-border-color);
+    border-radius: var(--bf-border-radius-sm);
+    color: var(--bf-text-secondary);
+    padding: 4px 8px;
+}
+
+.card-detail-color-clear:hover {
+    color: var(--bf-text-primary);
+    background-color: var(--bf-bg-hover);
+}

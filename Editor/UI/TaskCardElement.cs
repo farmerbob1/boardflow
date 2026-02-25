@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BoardFlow.Editor.Data;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace BoardFlow.Editor.UI
@@ -9,6 +10,8 @@ namespace BoardFlow.Editor.UI
     {
         readonly Label m_TitleLabel;
         readonly PriorityBarElement m_PriorityBar;
+        readonly VisualElement m_ColorStripe;
+        readonly VisualElement m_Body;
         readonly VisualElement m_ChecklistContainer;
         readonly Label m_ChecklistSummary;
 
@@ -34,15 +37,22 @@ namespace BoardFlow.Editor.UI
             m_PriorityBar = new PriorityBarElement(data.priority);
             Add(m_PriorityBar);
 
+            // Color stripe (below priority bar)
+            m_ColorStripe = new VisualElement();
+            m_ColorStripe.AddToClassList("card-color-stripe");
+            Add(m_ColorStripe);
+
             // Card body
-            var body = new VisualElement();
-            body.AddToClassList("task-card-body");
-            Add(body);
+            m_Body = new VisualElement();
+            m_Body.AddToClassList("task-card-body");
+            Add(m_Body);
+
+            ApplyCardColor(data.color, data.colorMode);
 
             // Title row with drag handle
             var titleRow = new VisualElement();
             titleRow.AddToClassList("task-card-title-row");
-            body.Add(titleRow);
+            m_Body.Add(titleRow);
 
             var dragHandle = new Label("\u2847");
             dragHandle.AddToClassList("task-card-drag-handle");
@@ -59,7 +69,7 @@ namespace BoardFlow.Editor.UI
             {
                 var descPreview = new Label(TruncateDescription(data.description, 80));
                 descPreview.AddToClassList("task-card-description");
-                body.Add(descPreview);
+                m_Body.Add(descPreview);
             }
 
             // Label chips row
@@ -67,7 +77,7 @@ namespace BoardFlow.Editor.UI
             {
                 var labelsRow = new VisualElement();
                 labelsRow.AddToClassList("task-card-labels");
-                body.Add(labelsRow);
+                m_Body.Add(labelsRow);
 
                 for (int i = 0; i < data.labelIds.Count; i++)
                 {
@@ -85,7 +95,7 @@ namespace BoardFlow.Editor.UI
             {
                 var checklistSection = new VisualElement();
                 checklistSection.AddToClassList("task-card-checklist-section");
-                body.Add(checklistSection);
+                m_Body.Add(checklistSection);
 
                 // Progress summary
                 int completed = 0;
@@ -151,6 +161,43 @@ namespace BoardFlow.Editor.UI
                         OnCardClicked?.Invoke(this);
                 });
                 m_ClickTimer.ExecuteLater(300);
+            }
+        }
+
+        public void SetColor(string color, CardColorMode mode)
+        {
+            ApplyCardColor(color, mode);
+        }
+
+        void ApplyCardColor(string hexColor, CardColorMode mode)
+        {
+            // Reset
+            m_ColorStripe.style.backgroundColor = StyleKeyword.Null;
+            m_Body.style.backgroundColor = StyleKeyword.Null;
+            m_ColorStripe.RemoveFromClassList("card-color-stripe--hidden");
+
+            if (string.IsNullOrEmpty(hexColor) || mode == CardColorMode.None)
+            {
+                m_ColorStripe.AddToClassList("card-color-stripe--hidden");
+                return;
+            }
+
+            Color parsed;
+            if (!ColorUtility.TryParseHtmlString(hexColor, out parsed))
+            {
+                m_ColorStripe.AddToClassList("card-color-stripe--hidden");
+                return;
+            }
+
+            if (mode == CardColorMode.Stripe)
+            {
+                m_ColorStripe.style.backgroundColor = parsed;
+            }
+            else if (mode == CardColorMode.Background)
+            {
+                m_ColorStripe.AddToClassList("card-color-stripe--hidden");
+                parsed.a = 0.2f;
+                m_Body.style.backgroundColor = parsed;
             }
         }
 

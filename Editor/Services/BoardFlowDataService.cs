@@ -59,6 +59,8 @@ namespace BoardFlow.Editor.Services
                             task.labelIds = new List<string>();
                         if (task.checklist == null)
                             task.checklist = new List<ChecklistItemData>();
+                        if (task.color == null)
+                            task.color = string.Empty;
                     }
                 }
             }
@@ -201,6 +203,19 @@ namespace BoardFlow.Editor.Services
             if (task != null)
             {
                 task.priority = priority;
+                task.Touch();
+                FindBoard(boardId)?.Touch();
+                Save();
+            }
+        }
+
+        public static void SetTaskColor(string boardId, string columnId, string taskId, string color, CardColorMode mode)
+        {
+            var task = FindTask(boardId, columnId, taskId);
+            if (task != null)
+            {
+                task.color = color ?? string.Empty;
+                task.colorMode = mode;
                 task.Touch();
                 FindBoard(boardId)?.Touch();
                 Save();

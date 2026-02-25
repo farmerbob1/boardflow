@@ -12,6 +12,7 @@ A Kanban-style project task tracker built directly into the Unity Editor. Keep y
 - **Labels/Tags** - Color-coded board-level labels for categorizing tasks, assignable via context menu or detail view
 - **Card Detail View** - Click a card to open a full editing window with title, priority, labels, description, and checklist
 - **Drag & Drop** - Reorder cards within and across columns, and reorder columns themselves
+- **Card Colors** - Per-card color with two display modes: colored stripe bar or translucent background tint
 - **Priority Levels** - None, Low, Medium, High, and Critical with colored indicator bars
 - **Checklists** - Add checklist items to tasks with toggleable checkboxes and progress bars
 - **Inline Editing** - Double-click any title or checklist item to edit in place
@@ -49,7 +50,7 @@ Open the board from the menu: **Window > BoardFlow**
 - **Single-click** a card to open the detail view for full editing (title, priority, labels, description, checklist)
 - **Double-click** a column title, task title, or checklist item to edit it inline
 - **Right-click** a column header for rename/delete options
-- **Right-click** a task card to set priority, assign labels, edit title, manage checklist items, or delete
+- **Right-click** a task card to set priority, set card color, assign labels, edit title, manage checklist items, or delete
 - Use the **Labels** toolbar button to create, edit, and delete board-level labels
 
 ### Drag & Drop
@@ -92,7 +93,7 @@ Board data is saved to `ProjectSettings/BoardFlow/boardflow-data.json` as pretty
 - [ ] Multiple selection - Shift/Ctrl+click to select multiple cards for bulk move or delete
 
 ### Visual Polish
-- [ ] Card color/cover - Background color or colored stripe per card
+- [x] Card color/cover - Background color or colored stripe per card
 - [ ] Assignee avatars - Assign team members to tasks pulled from project contributors
 - [ ] Swimlanes - Horizontal grouping rows within the board (by priority, assignee, etc.)
 - [ ] Column sorting - Sort cards by priority, date created, or alphabetical

@@ -304,12 +304,33 @@ namespace BoardFlow.Editor
 
             var menu = new GenericMenu();
 
+            var (cardCol, cardTask) = BoardFlowDataService.FindTaskAcrossColumns(board.id, card.TaskId);
+
             // Priority submenu
-            menu.AddItem(new GUIContent("Priority/None"), false, () => SetCardPriority(card, Priority.None));
-            menu.AddItem(new GUIContent("Priority/Low"), false, () => SetCardPriority(card, Priority.Low));
-            menu.AddItem(new GUIContent("Priority/Medium"), false, () => SetCardPriority(card, Priority.Medium));
-            menu.AddItem(new GUIContent("Priority/High"), false, () => SetCardPriority(card, Priority.High));
-            menu.AddItem(new GUIContent("Priority/Critical"), false, () => SetCardPriority(card, Priority.Critical));
+            menu.AddItem(new GUIContent("Priority/None"), cardTask != null && cardTask.priority == Priority.None, () => SetCardPriority(card, Priority.None));
+            menu.AddItem(new GUIContent("Priority/Low"), cardTask != null && cardTask.priority == Priority.Low, () => SetCardPriority(card, Priority.Low));
+            menu.AddItem(new GUIContent("Priority/Medium"), cardTask != null && cardTask.priority == Priority.Medium, () => SetCardPriority(card, Priority.Medium));
+            menu.AddItem(new GUIContent("Priority/High"), cardTask != null && cardTask.priority == Priority.High, () => SetCardPriority(card, Priority.High));
+            menu.AddItem(new GUIContent("Priority/Critical"), cardTask != null && cardTask.priority == Priority.Critical, () => SetCardPriority(card, Priority.Critical));
+
+            // Card Color submenu
+            if (cardTask != null)
+            {
+                string currentColor = cardTask.color ?? string.Empty;
+                var currentMode = cardTask.colorMode;
+
+                menu.AddItem(new GUIContent("Card Color/Color/Red"), currentColor == "#e74c3c", () => SetCardColor(card, "#e74c3c", currentMode));
+                menu.AddItem(new GUIContent("Card Color/Color/Orange"), currentColor == "#e67e22", () => SetCardColor(card, "#e67e22", currentMode));
+                menu.AddItem(new GUIContent("Card Color/Color/Yellow"), currentColor == "#f1c40f", () => SetCardColor(card, "#f1c40f", currentMode));
+                menu.AddItem(new GUIContent("Card Color/Color/Green"), currentColor == "#2ecc71", () => SetCardColor(card, "#2ecc71", currentMode));
+                menu.AddItem(new GUIContent("Card Color/Color/Blue"), currentColor == "#3498db", () => SetCardColor(card, "#3498db", currentMode));
+                menu.AddItem(new GUIContent("Card Color/Color/Purple"), currentColor == "#9b59b6", () => SetCardColor(card, "#9b59b6", currentMode));
+                menu.AddItem(new GUIContent("Card Color/Color/Pink"), currentColor == "#e91e63", () => SetCardColor(card, "#e91e63", currentMode));
+                menu.AddItem(new GUIContent("Card Color/Color/Teal"), currentColor == "#00bcd4", () => SetCardColor(card, "#00bcd4", currentMode));
+                menu.AddItem(new GUIContent("Card Color/Mode/Stripe"), currentMode == CardColorMode.Stripe, () => SetCardColor(card, currentColor, CardColorMode.Stripe));
+                menu.AddItem(new GUIContent("Card Color/Mode/Background"), currentMode == CardColorMode.Background, () => SetCardColor(card, currentColor, CardColorMode.Background));
+                menu.AddItem(new GUIContent("Card Color/Clear"), false, () => SetCardColor(card, string.Empty, CardColorMode.None));
+            }
 
             menu.AddSeparator("");
 
@@ -318,7 +339,6 @@ namespace BoardFlow.Editor
             menu.AddItem(new GUIContent("Add Checklist Item"), false, () => AddChecklistItemToCard(card));
 
             // Labels submenu
-            var (cardCol, cardTask) = BoardFlowDataService.FindTaskAcrossColumns(board.id, card.TaskId);
             if (cardTask != null && board.labels.Count > 0)
             {
                 menu.AddSeparator("");
@@ -376,6 +396,25 @@ namespace BoardFlow.Editor
 
             UndoService.RecordState("Set Priority");
             BoardFlowDataService.SetTaskPriority(board.id, card.ColumnId, card.TaskId, priority);
+            RebuildBoard();
+        }
+
+        void SetCardColor(TaskCardElement card, string color, CardColorMode mode)
+        {
+            var data = BoardFlowDataService.Data;
+            var board = data.GetActiveBoard();
+            if (board == null) return;
+
+            // Auto-set mode to Stripe when picking a color with mode None
+            if (!string.IsNullOrEmpty(color) && mode == CardColorMode.None)
+                mode = CardColorMode.Stripe;
+
+            // Auto-set color to Blue when picking a mode with no color
+            if (string.IsNullOrEmpty(color) && mode != CardColorMode.None)
+                color = "#3498db";
+
+            UndoService.RecordState("Set Card Color");
+            BoardFlowDataService.SetTaskColor(board.id, card.ColumnId, card.TaskId, color, mode);
             RebuildBoard();
         }
 

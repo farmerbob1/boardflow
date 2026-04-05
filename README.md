@@ -80,7 +80,7 @@ Board data is saved to `ProjectSettings/BoardFlow/boardflow-data.json` as pretty
 
 ## MCP Integration
 
-BoardFlow exposes 21 commands to AI agents through the [MCP for Unity](https://github.com/anthropics/mcp-unity) plugin using a reflection-based discovery approach. No assembly coupling is required — the MCP plugin scans for classes marked with `[McpHandlerGroup]` and calls their `Register` method at startup.
+BoardFlow exposes 21 commands to AI agents through the MCP for Unity plugin using a reflection-based discovery approach. No assembly coupling is required — the MCP plugin scans for classes marked with `[McpHandlerGroup]` and calls their `Register` method at startup.
 
 ### Available Commands
 
@@ -94,7 +94,7 @@ BoardFlow exposes 21 commands to AI agents through the [MCP for Unity](https://g
 
 ### Setup
 
-1. Install the [MCP for Unity](https://github.com/anthropics/mcp-unity) plugin in your project
+1. Install the MCP for Unity plugin in your project
 2. BoardFlow's handlers are automatically discovered — no additional configuration needed
 3. The BoardFlow window auto-refreshes after any MCP command mutates data
 
@@ -129,4 +129,4 @@ BoardFlow exposes 21 commands to AI agents through the [MCP for Unity](https://g
 
 - Unity 6 (6000.0) or later
 - [Newtonsoft.Json](https://docs.unity3d.com/Packages/com.unity.nuget.newtonsoft-json@3.2/manual/index.html) (automatically resolved as a package dependency)
-- [MCP for Unity](https://github.com/anthropics/mcp-unity) plugin (optional, for AI agent integration)
+- MCP for Unity plugin (optional, for AI agent integration)

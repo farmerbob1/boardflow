@@ -4,6 +4,8 @@ A Kanban-style project task tracker built directly into the Unity Editor. Keep y
 
 ![Unity 6+](https://img.shields.io/badge/Unity-6000.0%2B-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
+![BoardFlow Screenshot](Screenshots/screenshot.png)
+
 ## Features
 
 - **Multiple Boards** - Create and switch between separate boards for different workflows

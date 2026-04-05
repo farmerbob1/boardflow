@@ -1,7 +1,9 @@
 {
   "name": "BoardFlow.Editor",
   "rootNamespace": "BoardFlow.Editor",
-  "references": [],
+  "references": [
+    "Newtonsoft.Json"
+  ],
   "includePlatforms": [
     "Editor"
   ],

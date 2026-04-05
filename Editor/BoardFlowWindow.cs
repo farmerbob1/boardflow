@@ -634,6 +634,15 @@ namespace BoardFlow.Editor
             }
         }
 
+        // --- Public API ---
+
+        public void RefreshBoard()
+        {
+            BoardFlowDataService.Load();
+            RefreshToolbar();
+            RebuildBoard();
+        }
+
         // --- Helpers ---
 
         static string TruncateText(string text, int maxLength)

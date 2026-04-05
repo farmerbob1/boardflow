@@ -19,6 +19,7 @@ A Kanban-style project task tracker built directly into the Unity Editor. Keep y
 - **Search & Filter** - Filter cards in real-time across all columns by title, description, or label name
 - **Undo/Redo** - Full integration with Unity's Ctrl+Z / Ctrl+Y
 - **Persistent Data** - Saved as JSON in `ProjectSettings/BoardFlow/`, version-control friendly
+- **MCP Integration** - Expose boards, columns, tasks, labels, and checklists to AI agents via the Model Context Protocol (MCP) unity-plugin
 - **Dark Theme** - Styled to match the Unity editor skin
 
 ## Installation
@@ -69,12 +70,33 @@ com.boardflow/
     Services/                     # JSON persistence and undo system
     UI/                           # Visual element classes
     DragDrop/                     # Drag manipulators and state
+    McpHandlers/                  # MCP command handlers for AI agent integration
     Styles/                       # USS stylesheets
 ```
 
 ## Data Storage
 
 Board data is saved to `ProjectSettings/BoardFlow/boardflow-data.json` as pretty-printed JSON. This location is version-control friendly and shareable across a team without requiring Unity's AssetDatabase.
+
+## MCP Integration
+
+BoardFlow exposes 21 commands to AI agents through the [MCP for Unity](https://github.com/anthropics/mcp-unity) plugin using a reflection-based discovery approach. No assembly coupling is required — the MCP plugin scans for classes marked with `[McpHandlerGroup]` and calls their `Register` method at startup.
+
+### Available Commands
+
+| Category | Commands |
+|----------|----------|
+| **Boards** | `boardflow_list_boards`, `boardflow_create_board`, `boardflow_delete_board`, `boardflow_rename_board` |
+| **Columns** | `boardflow_list_columns`, `boardflow_create_column`, `boardflow_delete_column`, `boardflow_rename_column` |
+| **Tasks** | `boardflow_get_board`, `boardflow_create_task`, `boardflow_delete_task`, `boardflow_update_task`, `boardflow_move_task` |
+| **Labels** | `boardflow_create_label`, `boardflow_delete_label`, `boardflow_add_label_to_task`, `boardflow_remove_label_from_task` |
+| **Checklists** | `boardflow_add_checklist_item`, `boardflow_toggle_checklist_item`, `boardflow_delete_checklist_item` |
+
+### Setup
+
+1. Install the [MCP for Unity](https://github.com/anthropics/mcp-unity) plugin in your project
+2. BoardFlow's handlers are automatically discovered — no additional configuration needed
+3. The BoardFlow window auto-refreshes after any MCP command mutates data
 
 ## Roadmap (v2)
 
@@ -106,3 +128,5 @@ Board data is saved to `ProjectSettings/BoardFlow/boardflow-data.json` as pretty
 ## Requirements
 
 - Unity 6 (6000.0) or later
+- [Newtonsoft.Json](https://docs.unity3d.com/Packages/com.unity.nuget.newtonsoft-json@3.2/manual/index.html) (automatically resolved as a package dependency)
+- [MCP for Unity](https://github.com/anthropics/mcp-unity) plugin (optional, for AI agent integration)

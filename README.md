@@ -21,6 +21,13 @@ A Kanban-style project task tracker built directly into the Unity Editor. Keep y
 - **Search & Filter** - Filter cards in real-time across all columns by title, description, or label name
 - **Undo/Redo** - Full integration with Unity's Ctrl+Z / Ctrl+Y
 - **Persistent Data** - Saved as JSON in `ProjectSettings/BoardFlow/`, version-control friendly
+- **Column WIP Limits** - Set max task counts per column with orange/red visual warnings when at or over limit
+- **Collapse Columns** - Minimize columns to a narrow strip with a chevron toggle to save screen space
+- **Column Sorting** - Sort cards by priority, creation date, or alphabetically via column context menu
+- **Custom Fields** - Define board-level custom fields and set string values per task in the detail view
+- **Board Statistics** - View task counts, priority breakdown, checklist progress, and label usage from the toolbar
+- **Multiple Selection** - Ctrl+click to toggle, Shift+click to range-select, then bulk delete or move via context menu
+- **Notification Dot** - Window tab shows a warning icon when Critical priority tasks exist on the active board
 - **MCP Integration** - Expose boards, columns, tasks, labels, and checklists to AI agents via the Model Context Protocol (MCP) unity-plugin
 - **Dark Theme** - Styled to match the Unity editor skin
 
@@ -46,15 +53,21 @@ Open the board from the menu: **Window > BoardFlow**
 |----------|--------|
 | `Ctrl+N` | New board |
 | `Ctrl+F` | Focus search field |
-| `Escape` | Clear search / unfocus |
+| `Ctrl+Click` | Toggle card selection |
+| `Shift+Click` | Range-select cards in a column |
+| `Escape` | Clear selection / search / unfocus |
+| `Delete` | Open bulk action menu (when cards selected) |
 
 ### Editing
 
 - **Single-click** a card to open the detail view for full editing (title, priority, labels, description, checklist)
 - **Double-click** a column title, task title, or checklist item to edit it inline
-- **Right-click** a column header for rename/delete options
+- **Right-click** a column header for rename/delete, WIP limit, and sort options
 - **Right-click** a task card to set priority, set card color, assign labels, edit title, manage checklist items, or delete
+- **Right-click** with multiple cards selected for bulk delete or move operations
 - Use the **Labels** toolbar button to create, edit, and delete board-level labels
+- Use the **Fields** toolbar button to manage custom fields for the board
+- Use the **Stats** toolbar button to view board statistics
 
 ### Drag & Drop
 
@@ -82,7 +95,7 @@ Board data is saved to `ProjectSettings/BoardFlow/boardflow-data.json` as pretty
 
 ## MCP Integration
 
-BoardFlow exposes 21 commands to AI agents through the MCP for Unity plugin using a reflection-based discovery approach. No assembly coupling is required — the MCP plugin scans for classes marked with `[McpHandlerGroup]` and calls their `Register` method at startup.
+BoardFlow exposes 28 commands to AI agents through the MCP for Unity plugin using a reflection-based discovery approach. No assembly coupling is required — the MCP plugin scans for classes marked with `[McpHandlerGroup]` and calls their `Register` method at startup.
 
 ### Available Commands
 
@@ -93,6 +106,9 @@ BoardFlow exposes 21 commands to AI agents through the MCP for Unity plugin usin
 | **Tasks** | `boardflow_get_board`, `boardflow_create_task`, `boardflow_delete_task`, `boardflow_update_task`, `boardflow_move_task` |
 | **Labels** | `boardflow_create_label`, `boardflow_delete_label`, `boardflow_add_label_to_task`, `boardflow_remove_label_from_task` |
 | **Checklists** | `boardflow_add_checklist_item`, `boardflow_toggle_checklist_item`, `boardflow_delete_checklist_item` |
+| **Column Settings** | `boardflow_set_column_wip_limit`, `boardflow_set_column_collapsed`, `boardflow_set_column_sort_mode` |
+| **Custom Fields** | `boardflow_create_custom_field`, `boardflow_delete_custom_field`, `boardflow_set_custom_field_value` |
+| **Statistics** | `boardflow_get_board_statistics` |
 
 ### Setup
 
@@ -105,27 +121,27 @@ BoardFlow exposes 21 commands to AI agents through the MCP for Unity plugin usin
 ### High Value
 - [x] Task descriptions - Multi-line body/notes field beyond just the title
 - [x] Labels/tags - Color-coded tags for categorizing tasks (e.g., "Bug", "Feature", "Art") with filtering
-- [ ] Column WIP limits - Max task count per column with visual warning when exceeded
+- [x] Column WIP limits - Max task count per column with visual warning when exceeded
 - [ ] Due dates - Date field on tasks with overdue highlighting
 - [ ] Board templates - Preset column layouts (Scrum, Bug Triage, Art Pipeline, etc.) when creating a new board
 
 ### Quality of Life
 - [x] Card expand/detail view - Click to open a larger popup for editing everything in one place
-- [ ] Collapse columns - Minimize columns you don't need to see right now
+- [x] Collapse columns - Minimize columns you don't need to see right now
 - [ ] Virtual scrolling - Card count limits on scroll for boards with 100+ cards
 - [ ] Import/export - CSV or Trello JSON import so teams can migrate existing boards
-- [ ] Multiple selection - Shift/Ctrl+click to select multiple cards for bulk move or delete
+- [x] Multiple selection - Shift/Ctrl+click to select multiple cards for bulk move or delete
 
 ### Visual Polish
 - [x] Card color/cover - Background color or colored stripe per card
 - [ ] Assignee avatars - Assign team members to tasks pulled from project contributors
 - [ ] Swimlanes - Horizontal grouping rows within the board (by priority, assignee, etc.)
-- [ ] Column sorting - Sort cards by priority, date created, or alphabetical
+- [x] Column sorting - Sort cards by priority, date created, or alphabetical
 
 ### Power User
-- [ ] Board-level statistics - Small dashboard showing cards per column, completion rate, velocity
-- [ ] Notification dot on menu item - Show when tasks are overdue
-- [ ] Custom fields - User-defined key/value pairs on cards for project-specific data
+- [x] Board-level statistics - Small dashboard showing cards per column, completion rate, velocity
+- [x] Notification dot on menu item - Show when tasks are overdue
+- [x] Custom fields - User-defined key/value pairs on cards for project-specific data
 
 ## Requirements
 

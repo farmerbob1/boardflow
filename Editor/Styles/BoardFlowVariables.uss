@@ -25,6 +25,10 @@
     --bf-priority-low: #2ecc71;
     --bf-priority-none: transparent;
 
+    /* WIP limit */
+    --bf-wip-warning: #e67e22;
+    --bf-wip-exceeded: #e74c3c;
+
     /* Borders */
     --bf-border-color: #3e3e42;
     --bf-border-focus: #0078d4;

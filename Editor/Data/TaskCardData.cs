@@ -14,6 +14,7 @@ namespace BoardFlow.Editor.Data
         public List<string> labelIds;
         public string color;
         public CardColorMode colorMode;
+        public List<CustomFieldValue> customFieldValues;
         public long createdAt;
         public long modifiedAt;
 
@@ -27,6 +28,7 @@ namespace BoardFlow.Editor.Data
             labelIds = new List<string>();
             color = string.Empty;
             colorMode = CardColorMode.None;
+            customFieldValues = new List<CustomFieldValue>();
             createdAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             modifiedAt = createdAt;
         }

@@ -11,6 +11,7 @@ namespace BoardFlow.Editor.UI
         readonly Label m_CountBadge;
         readonly VisualElement m_CardContainer;
         readonly Button m_AddTaskButton;
+        readonly Button m_CollapseToggle;
 
         public string ColumnId { get; private set; }
         public VisualElement CardContainer => m_CardContainer;
@@ -18,16 +19,33 @@ namespace BoardFlow.Editor.UI
         public event Action<string> OnAddTaskClicked;
         public event Action<ColumnElement> OnContextMenu;
         public event Action<ColumnElement> OnTitleDoubleClicked;
+        public event Action<ColumnElement, bool> OnCollapseToggled;
 
         public ColumnElement(ColumnData data, string boardId, List<LabelData> boardLabels)
         {
             AddToClassList("column");
             ColumnId = data.id;
 
+            if (data.isCollapsed)
+            {
+                AddToClassList("column--collapsed");
+                tooltip = data.title;
+            }
+
             // Column header
             var header = new VisualElement();
             header.AddToClassList("column-header");
             Add(header);
+
+            // Collapse toggle
+            m_CollapseToggle = new Button(() =>
+            {
+                OnCollapseToggled?.Invoke(this, !data.isCollapsed);
+            });
+            m_CollapseToggle.text = data.isCollapsed ? "\u25B6" : "\u25BC";
+            m_CollapseToggle.AddToClassList("collapse-toggle");
+            m_CollapseToggle.tooltip = data.isCollapsed ? "Expand column" : "Collapse column";
+            header.Add(m_CollapseToggle);
 
             var dragHandle = new Label("\u2630");
             dragHandle.AddToClassList("column-drag-handle");
@@ -47,8 +65,19 @@ namespace BoardFlow.Editor.UI
             });
             headerLeft.Add(m_TitleLabel);
 
-            m_CountBadge = new Label(data.tasks.Count.ToString());
+            // Count badge with WIP limit
+            int count = data.tasks.Count;
+            string badgeText = data.wipLimit > 0 ? $"{count}/{data.wipLimit}" : count.ToString();
+            m_CountBadge = new Label(badgeText);
             m_CountBadge.AddToClassList("column-count-badge");
+
+            if (data.wipLimit > 0 && count >= data.wipLimit)
+            {
+                m_CountBadge.AddToClassList("column-wip-warning");
+                if (count > data.wipLimit)
+                    AddToClassList("column-wip-exceeded");
+            }
+
             headerLeft.Add(m_CountBadge);
 
             // Column header context menu
@@ -65,7 +94,7 @@ namespace BoardFlow.Editor.UI
             m_CardContainer = scrollView.contentContainer;
             m_CardContainer.AddToClassList("column-card-container");
 
-            // Add task cards
+            // Add task cards (sorting is handled by the service layer)
             for (int i = 0; i < data.tasks.Count; i++)
             {
                 var card = new TaskCardElement(data.tasks[i], data.id, boardLabels);

@@ -42,6 +42,19 @@ namespace BoardFlow.Editor.McpHandlers
             handlers["boardflow_add_checklist_item"] = AddChecklistItem;
             handlers["boardflow_toggle_checklist_item"] = ToggleChecklistItem;
             handlers["boardflow_delete_checklist_item"] = DeleteChecklistItem;
+
+            // Column settings
+            handlers["boardflow_set_column_wip_limit"] = SetColumnWipLimit;
+            handlers["boardflow_set_column_collapsed"] = SetColumnCollapsed;
+            handlers["boardflow_set_column_sort_mode"] = SetColumnSortMode;
+
+            // Custom field commands
+            handlers["boardflow_create_custom_field"] = CreateCustomField;
+            handlers["boardflow_delete_custom_field"] = DeleteCustomField;
+            handlers["boardflow_set_custom_field_value"] = SetCustomFieldValue;
+
+            // Statistics
+            handlers["boardflow_get_board_statistics"] = GetBoardStatistics;
         }
 
         static void RefreshWindow()
@@ -103,7 +116,10 @@ namespace BoardFlow.Editor.McpHandlers
             {
                 id = c.id,
                 title = c.title,
-                taskCount = c.tasks.Count
+                taskCount = c.tasks.Count,
+                wipLimit = c.wipLimit,
+                isCollapsed = c.isCollapsed,
+                sortMode = c.sortMode.ToString()
             }).ToList();
 
             return new { success = true, columns };
@@ -159,10 +175,18 @@ namespace BoardFlow.Editor.McpHandlers
                         name = l.name,
                         color = l.color
                     }).ToList(),
+                    customFields = board.customFields.Select(cf => new
+                    {
+                        id = cf.id,
+                        name = cf.name
+                    }).ToList(),
                     columns = board.columns.Select(c => new
                     {
                         id = c.id,
                         title = c.title,
+                        wipLimit = c.wipLimit,
+                        isCollapsed = c.isCollapsed,
+                        sortMode = c.sortMode.ToString(),
                         tasks = c.tasks.Select(t => new
                         {
                             id = t.id,
@@ -177,6 +201,11 @@ namespace BoardFlow.Editor.McpHandlers
                                 id = ci.id,
                                 text = ci.text,
                                 isCompleted = ci.isCompleted
+                            }).ToList(),
+                            customFieldValues = t.customFieldValues.Select(fv => new
+                            {
+                                fieldId = fv.fieldId,
+                                value = fv.value
                             }).ToList(),
                             createdAt = t.createdAt,
                             modifiedAt = t.modifiedAt
@@ -333,6 +362,124 @@ namespace BoardFlow.Editor.McpHandlers
             BoardFlowDataService.RemoveChecklistItem(boardId, columnId, taskId, itemId);
             RefreshWindow();
             return new { success = true };
+        }
+
+        // --- Column settings ---
+
+        static object SetColumnWipLimit(JObject parameters)
+        {
+            var boardId = (string)parameters["boardId"];
+            var columnId = (string)parameters["columnId"];
+            var wipLimit = (int)parameters["wipLimit"];
+            BoardFlowDataService.SetColumnWipLimit(boardId, columnId, wipLimit);
+            RefreshWindow();
+            return new { success = true };
+        }
+
+        static object SetColumnCollapsed(JObject parameters)
+        {
+            var boardId = (string)parameters["boardId"];
+            var columnId = (string)parameters["columnId"];
+            var collapsed = (bool)parameters["collapsed"];
+            BoardFlowDataService.SetColumnCollapsed(boardId, columnId, collapsed);
+            RefreshWindow();
+            return new { success = true };
+        }
+
+        static object SetColumnSortMode(JObject parameters)
+        {
+            var boardId = (string)parameters["boardId"];
+            var columnId = (string)parameters["columnId"];
+            var sortMode = Enum.Parse<SortMode>((string)parameters["sortMode"]);
+            BoardFlowDataService.SetColumnSortMode(boardId, columnId, sortMode);
+            RefreshWindow();
+            return new { success = true };
+        }
+
+        // --- Custom field commands ---
+
+        static object CreateCustomField(JObject parameters)
+        {
+            var boardId = (string)parameters["boardId"];
+            var name = (string)parameters["name"];
+            var field = BoardFlowDataService.CreateCustomField(boardId, name);
+            RefreshWindow();
+            return new { success = true, field = new { id = field.id, name = field.name } };
+        }
+
+        static object DeleteCustomField(JObject parameters)
+        {
+            var boardId = (string)parameters["boardId"];
+            var fieldId = (string)parameters["fieldId"];
+            BoardFlowDataService.DeleteCustomField(boardId, fieldId);
+            RefreshWindow();
+            return new { success = true };
+        }
+
+        static object SetCustomFieldValue(JObject parameters)
+        {
+            var boardId = (string)parameters["boardId"];
+            var columnId = (string)parameters["columnId"];
+            var taskId = (string)parameters["taskId"];
+            var fieldId = (string)parameters["fieldId"];
+            var value = (string)parameters["value"];
+            BoardFlowDataService.SetCustomFieldValue(boardId, columnId, taskId, fieldId, value);
+            RefreshWindow();
+            return new { success = true };
+        }
+
+        // --- Statistics ---
+
+        static object GetBoardStatistics(JObject parameters)
+        {
+            var boardId = (string)parameters["boardId"];
+            var board = BoardFlowDataService.FindBoard(boardId);
+
+            int totalTasks = 0;
+            int totalChecklist = 0;
+            int completedChecklist = 0;
+            var priorityCounts = new Dictionary<string, int>();
+            var columnsStats = new List<object>();
+
+            for (int c = 0; c < board.columns.Count; c++)
+            {
+                var col = board.columns[c];
+                totalTasks += col.tasks.Count;
+                columnsStats.Add(new { title = col.title, taskCount = col.tasks.Count, wipLimit = col.wipLimit });
+
+                for (int t = 0; t < col.tasks.Count; t++)
+                {
+                    var task = col.tasks[t];
+                    var pName = task.priority.ToString();
+                    if (!priorityCounts.ContainsKey(pName))
+                        priorityCounts[pName] = 0;
+                    priorityCounts[pName]++;
+
+                    if (task.checklist != null)
+                    {
+                        totalChecklist += task.checklist.Count;
+                        for (int ci = 0; ci < task.checklist.Count; ci++)
+                        {
+                            if (task.checklist[ci].isCompleted)
+                                completedChecklist++;
+                        }
+                    }
+                }
+            }
+
+            return new
+            {
+                success = true,
+                statistics = new
+                {
+                    totalTasks,
+                    columns = columnsStats,
+                    priorityBreakdown = priorityCounts,
+                    checklistTotal = totalChecklist,
+                    checklistCompleted = completedChecklist,
+                    hasCriticalTasks = BoardFlowDataService.HasCriticalTasks(boardId)
+                }
+            };
         }
     }
 }

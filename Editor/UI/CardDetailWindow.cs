@@ -366,6 +366,58 @@ namespace BoardFlow.Editor.UI
             addItemBtn.text = "+ Add Item";
             addItemBtn.AddToClassList("card-detail-add-item");
             checkSection.Add(addItemBtn);
+
+            // --- Custom Fields ---
+            if (board.customFields.Count > 0)
+            {
+                var fieldsSection = new VisualElement();
+                fieldsSection.AddToClassList("card-detail-section");
+                root.Add(fieldsSection);
+
+                var fieldsHeader = new Label("CUSTOM FIELDS");
+                fieldsHeader.AddToClassList("card-detail-section-header");
+                fieldsSection.Add(fieldsHeader);
+
+                for (int f = 0; f < board.customFields.Count; f++)
+                {
+                    var fieldDef = board.customFields[f];
+                    var capturedFieldId = fieldDef.id;
+
+                    // Find current value
+                    string currentValue = string.Empty;
+                    for (int v = 0; v < task.customFieldValues.Count; v++)
+                    {
+                        if (task.customFieldValues[v].fieldId == fieldDef.id)
+                        {
+                            currentValue = task.customFieldValues[v].value;
+                            break;
+                        }
+                    }
+
+                    var fieldRow = new VisualElement();
+                    fieldRow.AddToClassList("card-detail-custom-field-row");
+
+                    var fieldLabel = new Label(fieldDef.name);
+                    fieldLabel.AddToClassList("card-detail-custom-field-label");
+                    fieldRow.Add(fieldLabel);
+
+                    var fieldValue = new TextField();
+                    fieldValue.AddToClassList("card-detail-custom-field-value");
+                    fieldValue.value = currentValue;
+                    fieldValue.RegisterCallback<FocusOutEvent>(evt =>
+                    {
+                        var (c3, t3) = GetTask();
+                        if (t3 == null) return;
+                        var newVal = fieldValue.value;
+                        UndoService.RecordState("Set Custom Field");
+                        BoardFlowDataService.SetCustomFieldValue(m_BoardId, c3.id, m_TaskId, capturedFieldId, newVal);
+                        m_OnChanged?.Invoke();
+                    });
+                    fieldRow.Add(fieldValue);
+
+                    fieldsSection.Add(fieldRow);
+                }
+            }
         }
 
         void AddStyleSheet(string name)

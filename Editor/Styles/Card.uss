@@ -203,3 +203,14 @@
     padding: 2px 4px;
     min-height: 18px;
 }
+
+/* Selection */
+.task-card--selected {
+    border-color: var(--bf-accent);
+    border-width: 2px;
+    background-color: var(--bf-accent-light);
+}
+
+.task-card--selected:hover {
+    border-color: var(--bf-accent-hover);
+}

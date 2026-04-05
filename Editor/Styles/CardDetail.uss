@@ -161,3 +161,37 @@
     color: var(--bf-text-primary);
     background-color: var(--bf-bg-hover);
 }
+
+/* Custom fields section */
+.card-detail-custom-field-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: var(--bf-spacing-sm);
+}
+
+.card-detail-custom-field-label {
+    width: 100px;
+    font-size: 11px;
+    color: var(--bf-text-secondary);
+    flex-shrink: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-detail-custom-field-value {
+    flex-grow: 1;
+}
+
+.card-detail-custom-field-value .unity-text-field__input {
+    background-color: var(--bf-bg-tertiary);
+    border-color: var(--bf-border-color);
+    border-radius: var(--bf-border-radius-sm);
+    color: var(--bf-text-primary);
+    font-size: 12px;
+    padding: 2px 6px;
+    min-height: 20px;
+}
+
+.card-detail-custom-field-value .unity-text-field__input:focus {
+    border-color: var(--bf-border-focus);
+}

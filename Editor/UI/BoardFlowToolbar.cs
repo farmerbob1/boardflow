@@ -20,6 +20,8 @@ namespace BoardFlow.Editor.UI
         public event Action OnDeleteBoardClicked;
         public event Action OnAddColumnClicked;
         public event Action OnLabelsClicked;
+        public event Action OnFieldsClicked;
+        public event Action OnStatsClicked;
         public event Action OnGridSettingsClicked;
         public event Action<string> OnSearchChanged;
 
@@ -71,6 +73,12 @@ namespace BoardFlow.Editor.UI
             m_LabelsButton.AddToClassList("toolbar-button");
             leftSection.Add(m_LabelsButton);
 
+            var fieldsButton = new Button(() => OnFieldsClicked?.Invoke());
+            fieldsButton.text = "Fields";
+            fieldsButton.tooltip = "Manage Custom Fields";
+            fieldsButton.AddToClassList("toolbar-button");
+            leftSection.Add(fieldsButton);
+
             // Right section
             var rightSection = new VisualElement();
             rightSection.AddToClassList("toolbar-right");
@@ -98,6 +106,12 @@ namespace BoardFlow.Editor.UI
                     searchLabel.style.display = DisplayStyle.Flex;
             });
             rightSection.Add(m_SearchField);
+
+            var statsButton = new Button(() => OnStatsClicked?.Invoke());
+            statsButton.text = "Stats";
+            statsButton.tooltip = "Board Statistics";
+            statsButton.AddToClassList("toolbar-button");
+            rightSection.Add(statsButton);
 
             m_GridSettingsButton = new Button(() => OnGridSettingsClicked?.Invoke());
             m_GridSettingsButton.text = "Settings";

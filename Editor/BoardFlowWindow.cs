@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using BoardFlow.Editor.Data;
 using BoardFlow.Editor.DragDrop;
 using BoardFlow.Editor.Services;
@@ -13,6 +14,7 @@ namespace BoardFlow.Editor
         BoardFlowToolbar m_Toolbar;
         BoardView m_BoardView;
         DragState m_DragState;
+        SelectionManager m_Selection;
 
         [MenuItem("Window/BoardFlow")]
         public static void ShowWindow()
@@ -26,7 +28,9 @@ namespace BoardFlow.Editor
         {
             BoardFlowDataService.Load();
             m_DragState = new DragState();
+            m_Selection = new SelectionManager();
             BuildUI();
+            UpdateWindowTitle();
 
             Undo.undoRedoPerformed += OnUndoRedo;
         }
@@ -69,6 +73,8 @@ namespace BoardFlow.Editor
             m_Toolbar.OnDeleteBoardClicked += OnDeleteBoard;
             m_Toolbar.OnAddColumnClicked += OnAddColumn;
             m_Toolbar.OnLabelsClicked += OnLabelsManager;
+            m_Toolbar.OnFieldsClicked += OnFieldsManager;
+            m_Toolbar.OnStatsClicked += OnStats;
             m_Toolbar.OnGridSettingsClicked += OnGridSettings;
             m_Toolbar.OnSearchChanged += OnSearchChanged;
             rootVisualElement.Add(m_Toolbar);
@@ -101,6 +107,8 @@ namespace BoardFlow.Editor
             m_BoardView.SetBoard(board);
             WireCardEvents();
             ApplyGridSettings();
+            ApplySelectionVisuals();
+            UpdateWindowTitle();
         }
 
         void WireCardEvents()
@@ -108,6 +116,7 @@ namespace BoardFlow.Editor
             foreach (var col in m_BoardView.Columns)
             {
                 col.OnTitleDoubleClicked += BeginEditColumnTitle;
+                col.OnCollapseToggled += OnColumnCollapseToggled;
 
                 // Column drag manipulator
                 var colDragManip = new ColumnDragManipulator(
@@ -139,16 +148,55 @@ namespace BoardFlow.Editor
 
         void ApplyGridSettings()
         {
-            var settings = BoardFlowDataService.Data.gridSettings;
+            var data = BoardFlowDataService.Data;
+            var settings = data.gridSettings;
             if (settings == null) return;
 
+            var board = data.GetActiveBoard();
+            if (board == null) return;
+
+            int colIdx = 0;
             foreach (var col in m_BoardView.Columns)
             {
-                col.style.width = settings.columnWidth;
-                col.style.minWidth = settings.columnWidth;
-                col.style.maxWidth = settings.columnWidth;
+                var colData = colIdx < board.columns.Count ? board.columns[colIdx] : null;
+                if (colData != null && colData.isCollapsed)
+                {
+                    col.style.width = 40;
+                    col.style.minWidth = 40;
+                    col.style.maxWidth = 40;
+                }
+                else
+                {
+                    col.style.width = settings.columnWidth;
+                    col.style.minWidth = settings.columnWidth;
+                    col.style.maxWidth = settings.columnWidth;
+                }
                 col.style.marginRight = settings.spacing;
+                colIdx++;
             }
+        }
+
+        void ApplySelectionVisuals()
+        {
+            // Prune selection for deleted tasks
+            var validIds = new HashSet<string>();
+            foreach (var col in m_BoardView.Columns)
+            {
+                foreach (var card in col.GetCards())
+                {
+                    validIds.Add(card.TaskId);
+                    card.SetSelected(m_Selection.IsSelected(card.TaskId));
+                }
+            }
+            m_Selection.PruneInvalid(validIds);
+        }
+
+        void UpdateWindowTitle()
+        {
+            var data = BoardFlowDataService.Data;
+            var board = data?.GetActiveBoard();
+            bool hasCritical = board != null && BoardFlowDataService.HasCriticalTasks(board.id);
+            titleContent = new GUIContent(hasCritical ? "BoardFlow \u26A0" : "BoardFlow");
         }
 
         // --- Drag-and-drop ---
@@ -159,6 +207,7 @@ namespace BoardFlow.Editor
             var board = data.GetActiveBoard();
             if (board == null) return;
 
+            m_Selection.ClearSelection();
             UndoService.RecordState("Move Task");
             BoardFlowDataService.MoveTask(board.id, fromColumnId, toColumnId, taskId, insertIndex);
             RebuildBoard();
@@ -184,6 +233,7 @@ namespace BoardFlow.Editor
             {
                 if (data.boards[i].name == boardName)
                 {
+                    m_Selection.ClearSelection();
                     UndoService.RecordState("Switch Board");
                     BoardFlowDataService.SetActiveBoard(data.boards[i].id);
                     RebuildBoard();
@@ -206,9 +256,7 @@ namespace BoardFlow.Editor
             var board = data.GetActiveBoard();
             if (board == null) return;
 
-            var newName = board.name;
-            // Use a simple input dialog
-            newName = EditorInputDialog.Show("Rename Board", "Board name:", board.name);
+            var newName = EditorInputDialog.Show("Rename Board", "Board name:", board.name);
             if (!string.IsNullOrWhiteSpace(newName) && newName != board.name)
             {
                 UndoService.RecordState("Rename Board");
@@ -259,6 +307,24 @@ namespace BoardFlow.Editor
             LabelManagerPopup.Show(board.id, () => RebuildBoard());
         }
 
+        void OnFieldsManager()
+        {
+            var data = BoardFlowDataService.Data;
+            var board = data.GetActiveBoard();
+            if (board == null) return;
+
+            CustomFieldManagerPopup.Show(board.id, () => RebuildBoard());
+        }
+
+        void OnStats()
+        {
+            var data = BoardFlowDataService.Data;
+            var board = data.GetActiveBoard();
+            if (board == null) return;
+
+            BoardStatisticsPopup.Show(board.id);
+        }
+
         void OnGridSettings()
         {
             GridSettingsPopup.Show(BoardFlowDataService.Data.gridSettings, settings =>
@@ -271,17 +337,35 @@ namespace BoardFlow.Editor
 
         void OnSearchChanged(string searchText)
         {
+            m_Selection.ClearSelection();
             m_BoardView.SetSearchFilter(searchText);
         }
 
         // --- Card events ---
 
-        void OnCardClicked(TaskCardElement card)
+        void OnCardClicked(TaskCardElement card, EventModifiers modifiers)
         {
             var data = BoardFlowDataService.Data;
             var board = data.GetActiveBoard();
             if (board == null) return;
 
+            if ((modifiers & EventModifiers.Control) != 0)
+            {
+                m_Selection.ToggleSelect(card.TaskId, card.ColumnId);
+                ApplySelectionVisuals();
+                return;
+            }
+
+            if ((modifiers & EventModifiers.Shift) != 0)
+            {
+                m_Selection.RangeSelect(card.TaskId, card.ColumnId, m_BoardView.Columns);
+                ApplySelectionVisuals();
+                return;
+            }
+
+            // No modifier — open detail view
+            m_Selection.ClearSelection();
+            ApplySelectionVisuals();
             CardDetailWindow.Show(board.id, card.TaskId, () => RebuildBoard());
         }
 
@@ -301,6 +385,13 @@ namespace BoardFlow.Editor
             var data = BoardFlowDataService.Data;
             var board = data.GetActiveBoard();
             if (board == null) return;
+
+            // Multi-selection context menu
+            if (m_Selection.Count > 1 && m_Selection.IsSelected(card.TaskId))
+            {
+                ShowBulkContextMenu(board);
+                return;
+            }
 
             var menu = new GenericMenu();
 
@@ -335,7 +426,12 @@ namespace BoardFlow.Editor
             menu.AddSeparator("");
 
             menu.AddItem(new GUIContent("Edit Title"), false, () => BeginEditCardTitle(card));
-            menu.AddItem(new GUIContent("Open Details"), false, () => OnCardClicked(card));
+            menu.AddItem(new GUIContent("Open Details"), false, () =>
+            {
+                m_Selection.ClearSelection();
+                ApplySelectionVisuals();
+                CardDetailWindow.Show(board.id, card.TaskId, () => RebuildBoard());
+            });
             menu.AddItem(new GUIContent("Add Checklist Item"), false, () => AddChecklistItemToCard(card));
 
             // Labels submenu
@@ -388,6 +484,66 @@ namespace BoardFlow.Editor
             menu.ShowAsContext();
         }
 
+        void ShowBulkContextMenu(BoardData board)
+        {
+            var menu = new GenericMenu();
+            int count = m_Selection.Count;
+
+            menu.AddItem(new GUIContent($"Delete {count} Selected Tasks"), false, () =>
+            {
+                if (EditorUtility.DisplayDialog("Delete Tasks",
+                    $"Delete {count} selected tasks?", "Delete", "Cancel"))
+                {
+                    UndoService.RecordState("Delete Selected Tasks");
+                    var toDelete = new List<(string columnId, string taskId)>();
+                    foreach (var col in m_BoardView.Columns)
+                    {
+                        foreach (var c in col.GetCards())
+                        {
+                            if (m_Selection.IsSelected(c.TaskId))
+                                toDelete.Add((col.ColumnId, c.TaskId));
+                        }
+                    }
+                    BoardFlowDataService.DeleteTasks(board.id, toDelete);
+                    m_Selection.ClearSelection();
+                    RebuildBoard();
+                }
+            });
+
+            menu.AddSeparator("");
+
+            // Move to column submenu
+            for (int i = 0; i < board.columns.Count; i++)
+            {
+                var targetCol = board.columns[i];
+                menu.AddItem(new GUIContent($"Move Selected To/{targetCol.title}"), false, () =>
+                {
+                    UndoService.RecordState("Move Selected Tasks");
+                    var toMove = new List<(string fromColumnId, string taskId)>();
+                    foreach (var col in m_BoardView.Columns)
+                    {
+                        foreach (var c in col.GetCards())
+                        {
+                            if (m_Selection.IsSelected(c.TaskId) && col.ColumnId != targetCol.id)
+                                toMove.Add((col.ColumnId, c.TaskId));
+                        }
+                    }
+                    BoardFlowDataService.MoveTasks(board.id, toMove, targetCol.id);
+                    m_Selection.ClearSelection();
+                    RebuildBoard();
+                });
+            }
+
+            menu.AddSeparator("");
+            menu.AddItem(new GUIContent("Clear Selection"), false, () =>
+            {
+                m_Selection.ClearSelection();
+                ApplySelectionVisuals();
+            });
+
+            menu.ShowAsContext();
+        }
+
         void SetCardPriority(TaskCardElement card, Priority priority)
         {
             var data = BoardFlowDataService.Data;
@@ -405,11 +561,8 @@ namespace BoardFlow.Editor
             var board = data.GetActiveBoard();
             if (board == null) return;
 
-            // Auto-set mode to Stripe when picking a color with mode None
             if (!string.IsNullOrEmpty(color) && mode == CardColorMode.None)
                 mode = CardColorMode.Stripe;
-
-            // Auto-set color to Blue when picking a mode with no color
             if (string.IsNullOrEmpty(color) && mode != CardColorMode.None)
                 color = "#3498db";
 
@@ -525,15 +678,52 @@ namespace BoardFlow.Editor
 
         // --- Column events ---
 
+        void OnColumnCollapseToggled(ColumnElement column, bool collapsed)
+        {
+            var data = BoardFlowDataService.Data;
+            var board = data.GetActiveBoard();
+            if (board == null) return;
+
+            UndoService.RecordState("Toggle Column Collapse");
+            BoardFlowDataService.SetColumnCollapsed(board.id, column.ColumnId, collapsed);
+            RebuildBoard();
+        }
+
         void OnColumnContextMenu(ColumnElement column)
         {
             var data = BoardFlowDataService.Data;
             var board = data.GetActiveBoard();
             if (board == null) return;
 
+            var colData = BoardFlowDataService.FindColumn(board.id, column.ColumnId);
+
             var menu = new GenericMenu();
 
             menu.AddItem(new GUIContent("Rename Column"), false, () => BeginEditColumnTitle(column));
+
+            // WIP Limit
+            menu.AddItem(new GUIContent("Set WIP Limit..."), false, () =>
+            {
+                var currentLimit = colData != null ? colData.wipLimit : 0;
+                var result = EditorInputDialog.Show("WIP Limit", "Max tasks (0 = unlimited):", currentLimit.ToString());
+                if (result != null && int.TryParse(result, out int newLimit))
+                {
+                    UndoService.RecordState("Set WIP Limit");
+                    BoardFlowDataService.SetColumnWipLimit(board.id, column.ColumnId, newLimit);
+                    RebuildBoard();
+                }
+            });
+
+            // Sort submenu
+            menu.AddSeparator("");
+            var currentSort = colData != null ? colData.sortMode : SortMode.Manual;
+            menu.AddItem(new GUIContent("Sort By/Manual (Drag Order)"), currentSort == SortMode.Manual, () => SetColumnSort(board.id, column.ColumnId, SortMode.Manual));
+            menu.AddItem(new GUIContent("Sort By/Priority (High to Low)"), currentSort == SortMode.PriorityDesc, () => SetColumnSort(board.id, column.ColumnId, SortMode.PriorityDesc));
+            menu.AddItem(new GUIContent("Sort By/Created (Newest First)"), currentSort == SortMode.CreatedNewest, () => SetColumnSort(board.id, column.ColumnId, SortMode.CreatedNewest));
+            menu.AddItem(new GUIContent("Sort By/Created (Oldest First)"), currentSort == SortMode.CreatedOldest, () => SetColumnSort(board.id, column.ColumnId, SortMode.CreatedOldest));
+            menu.AddItem(new GUIContent("Sort By/Alphabetical (A-Z)"), currentSort == SortMode.AlphabeticalAZ, () => SetColumnSort(board.id, column.ColumnId, SortMode.AlphabeticalAZ));
+            menu.AddItem(new GUIContent("Sort By/Alphabetical (Z-A)"), currentSort == SortMode.AlphabeticalZA, () => SetColumnSort(board.id, column.ColumnId, SortMode.AlphabeticalZA));
+
             menu.AddSeparator("");
             menu.AddItem(new GUIContent("Delete Column"), false, () =>
             {
@@ -548,6 +738,13 @@ namespace BoardFlow.Editor
             });
 
             menu.ShowAsContext();
+        }
+
+        void SetColumnSort(string boardId, string columnId, SortMode mode)
+        {
+            UndoService.RecordState("Change Sort Mode");
+            BoardFlowDataService.SetColumnSortMode(boardId, columnId, mode);
+            RebuildBoard();
         }
 
         void BeginEditColumnTitle(ColumnElement column)
@@ -628,9 +825,19 @@ namespace BoardFlow.Editor
             else if (evt.keyCode == KeyCode.Escape)
             {
                 evt.Use();
+                m_Selection.ClearSelection();
+                ApplySelectionVisuals();
                 m_Toolbar.ClearSearch();
                 m_BoardView.SetSearchFilter(null);
                 rootVisualElement.focusController?.focusedElement?.Blur();
+            }
+            else if (evt.keyCode == KeyCode.Delete && m_Selection.Count > 0)
+            {
+                evt.Use();
+                var data = BoardFlowDataService.Data;
+                var board = data.GetActiveBoard();
+                if (board != null)
+                    ShowBulkContextMenu(board);
             }
         }
 

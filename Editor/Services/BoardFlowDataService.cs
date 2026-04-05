@@ -47,6 +47,8 @@ namespace BoardFlow.Editor.Services
                 var board = s_Data.boards[b];
                 if (board.labels == null)
                     board.labels = new List<LabelData>();
+                if (board.customFields == null)
+                    board.customFields = new List<CustomFieldDefinition>();
 
                 for (int c = 0; c < board.columns.Count; c++)
                 {
@@ -61,6 +63,8 @@ namespace BoardFlow.Editor.Services
                             task.checklist = new List<ChecklistItemData>();
                         if (task.color == null)
                             task.color = string.Empty;
+                        if (task.customFieldValues == null)
+                            task.customFieldValues = new List<CustomFieldValue>();
                     }
                 }
             }
@@ -161,6 +165,63 @@ namespace BoardFlow.Editor.Services
             }
         }
 
+        public static void SetColumnWipLimit(string boardId, string columnId, int limit)
+        {
+            var col = FindColumn(boardId, columnId);
+            if (col == null) return;
+
+            col.wipLimit = limit < 0 ? 0 : limit;
+            FindBoard(boardId)?.Touch();
+            Save();
+        }
+
+        public static void SetColumnCollapsed(string boardId, string columnId, bool collapsed)
+        {
+            var col = FindColumn(boardId, columnId);
+            if (col == null) return;
+
+            col.isCollapsed = collapsed;
+            FindBoard(boardId)?.Touch();
+            Save();
+        }
+
+        public static void SetColumnSortMode(string boardId, string columnId, SortMode mode)
+        {
+            var col = FindColumn(boardId, columnId);
+            if (col == null) return;
+
+            col.sortMode = mode;
+            if (mode != SortMode.Manual)
+                SortColumnTasks(boardId, columnId);
+            FindBoard(boardId)?.Touch();
+            Save();
+        }
+
+        public static void SortColumnTasks(string boardId, string columnId)
+        {
+            var col = FindColumn(boardId, columnId);
+            if (col == null || col.sortMode == SortMode.Manual) return;
+
+            switch (col.sortMode)
+            {
+                case SortMode.PriorityDesc:
+                    col.tasks.Sort((a, b) => b.priority.CompareTo(a.priority));
+                    break;
+                case SortMode.CreatedNewest:
+                    col.tasks.Sort((a, b) => b.createdAt.CompareTo(a.createdAt));
+                    break;
+                case SortMode.CreatedOldest:
+                    col.tasks.Sort((a, b) => a.createdAt.CompareTo(b.createdAt));
+                    break;
+                case SortMode.AlphabeticalAZ:
+                    col.tasks.Sort((a, b) => string.Compare(a.title, b.title, System.StringComparison.OrdinalIgnoreCase));
+                    break;
+                case SortMode.AlphabeticalZA:
+                    col.tasks.Sort((a, b) => string.Compare(b.title, a.title, System.StringComparison.OrdinalIgnoreCase));
+                    break;
+            }
+        }
+
         // --- Task CRUD ---
 
         public static TaskCardData CreateTask(string boardId, string columnId, string title)
@@ -170,6 +231,8 @@ namespace BoardFlow.Editor.Services
 
             var task = new TaskCardData(title);
             col.tasks.Add(task);
+            if (col.sortMode != SortMode.Manual)
+                SortColumnTasks(boardId, columnId);
             FindBoard(boardId)?.Touch();
             Save();
             return task;
@@ -410,6 +473,8 @@ namespace BoardFlow.Editor.Services
                 insertIndex = toCol.tasks.Count;
 
             toCol.tasks.Insert(insertIndex, task);
+            if (toCol.sortMode != SortMode.Manual)
+                SortColumnTasks(boardId, toColumnId);
             task.Touch();
             FindBoard(boardId)?.Touch();
             Save();
@@ -446,6 +511,164 @@ namespace BoardFlow.Editor.Services
             board.columns.Insert(insertIndex, column);
             board.Touch();
             Save();
+        }
+
+        // --- Custom Field CRUD ---
+
+        public static CustomFieldDefinition CreateCustomField(string boardId, string name)
+        {
+            var board = FindBoard(boardId);
+            if (board == null) return null;
+
+            var field = new CustomFieldDefinition(name);
+            board.customFields.Add(field);
+            board.Touch();
+            Save();
+            return field;
+        }
+
+        public static void RenameCustomField(string boardId, string fieldId, string newName)
+        {
+            var board = FindBoard(boardId);
+            if (board == null) return;
+
+            for (int i = 0; i < board.customFields.Count; i++)
+            {
+                if (board.customFields[i].id == fieldId)
+                {
+                    board.customFields[i].name = newName;
+                    break;
+                }
+            }
+
+            board.Touch();
+            Save();
+        }
+
+        public static void DeleteCustomField(string boardId, string fieldId)
+        {
+            var board = FindBoard(boardId);
+            if (board == null) return;
+
+            board.customFields.RemoveAll(f => f.id == fieldId);
+
+            // Remove values from all tasks
+            for (int c = 0; c < board.columns.Count; c++)
+            {
+                for (int t = 0; t < board.columns[c].tasks.Count; t++)
+                {
+                    board.columns[c].tasks[t].customFieldValues.RemoveAll(v => v.fieldId == fieldId);
+                }
+            }
+
+            board.Touch();
+            Save();
+        }
+
+        public static void SetCustomFieldValue(string boardId, string columnId, string taskId, string fieldId, string value)
+        {
+            var task = FindTask(boardId, columnId, taskId);
+            if (task == null) return;
+
+            for (int i = 0; i < task.customFieldValues.Count; i++)
+            {
+                if (task.customFieldValues[i].fieldId == fieldId)
+                {
+                    task.customFieldValues[i].value = value;
+                    task.Touch();
+                    FindBoard(boardId)?.Touch();
+                    Save();
+                    return;
+                }
+            }
+
+            task.customFieldValues.Add(new CustomFieldValue(fieldId, value));
+            task.Touch();
+            FindBoard(boardId)?.Touch();
+            Save();
+        }
+
+        public static CustomFieldDefinition FindCustomField(string boardId, string fieldId)
+        {
+            var board = FindBoard(boardId);
+            if (board == null) return null;
+            for (int i = 0; i < board.customFields.Count; i++)
+            {
+                if (board.customFields[i].id == fieldId)
+                    return board.customFields[i];
+            }
+            return null;
+        }
+
+        // --- Bulk operations ---
+
+        public static void DeleteTasks(string boardId, List<(string columnId, string taskId)> tasks)
+        {
+            var board = FindBoard(boardId);
+            if (board == null) return;
+
+            for (int i = 0; i < tasks.Count; i++)
+            {
+                var col = FindColumn(boardId, tasks[i].columnId);
+                col?.tasks.RemoveAll(t => t.id == tasks[i].taskId);
+            }
+
+            board.Touch();
+            Save();
+        }
+
+        public static void MoveTasks(string boardId, List<(string fromColumnId, string taskId)> tasks, string toColumnId)
+        {
+            var board = FindBoard(boardId);
+            var toCol = FindColumn(boardId, toColumnId);
+            if (board == null || toCol == null) return;
+
+            for (int i = 0; i < tasks.Count; i++)
+            {
+                var fromCol = FindColumn(boardId, tasks[i].fromColumnId);
+                if (fromCol == null) continue;
+
+                TaskCardData task = null;
+                for (int t = 0; t < fromCol.tasks.Count; t++)
+                {
+                    if (fromCol.tasks[t].id == tasks[i].taskId)
+                    {
+                        task = fromCol.tasks[t];
+                        fromCol.tasks.RemoveAt(t);
+                        break;
+                    }
+                }
+
+                if (task != null)
+                {
+                    task.Touch();
+                    toCol.tasks.Add(task);
+                }
+            }
+
+            if (toCol.sortMode != SortMode.Manual)
+                SortColumnTasks(boardId, toColumnId);
+
+            board.Touch();
+            Save();
+        }
+
+        // --- Notification ---
+
+        public static bool HasCriticalTasks(string boardId)
+        {
+            var board = FindBoard(boardId);
+            if (board == null) return false;
+
+            for (int c = 0; c < board.columns.Count; c++)
+            {
+                for (int t = 0; t < board.columns[c].tasks.Count; t++)
+                {
+                    if (board.columns[c].tasks[t].priority == Priority.Critical)
+                        return true;
+                }
+            }
+            return false;
         }
 
         // --- Grid Settings ---

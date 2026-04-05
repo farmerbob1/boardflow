@@ -101,7 +101,9 @@ namespace BoardFlow.Editor.DragDrop
             if (!m_PointerDown) return;
             if (evt.pointerId != m_PointerId) return;
 
-            if (m_DragState.IsDragging)
+            bool wasDragging = m_DragState.IsDragging;
+
+            if (wasDragging)
             {
                 CompleteDrag();
             }
@@ -111,7 +113,16 @@ namespace BoardFlow.Editor.DragDrop
             if (target.HasPointerCapture(m_PointerId))
                 target.ReleasePointer(m_PointerId);
 
-            evt.StopPropagation();
+            if (wasDragging)
+            {
+                evt.StopPropagation();
+            }
+            else
+            {
+                // No drag occurred — synthesize a click so selection works
+                var card = target as TaskCardElement;
+                card?.SimulateClick(evt.ctrlKey, evt.shiftKey);
+            }
         }
 
         void OnPointerCaptureOut(PointerCaptureOutEvent evt)

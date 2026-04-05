@@ -20,7 +20,7 @@ namespace BoardFlow.Editor.UI
 
         public event Action<TaskCardElement> OnContextMenu;
         public event Action<TaskCardElement> OnTitleDoubleClicked;
-        public event Action<TaskCardElement> OnCardClicked;
+        public event Action<TaskCardElement, EventModifiers> OnCardClicked;
         public event Action<string, string, bool> OnChecklistToggled;
         public event Action<string, string, string> OnChecklistTextChanged;
 
@@ -135,6 +135,9 @@ namespace BoardFlow.Editor.UI
                 }
             }
 
+            // Click on card body for selection/open
+            m_Body.RegisterCallback<ClickEvent>(OnBodyClicked);
+
             // Context menu
             this.AddManipulator(new ContextualMenuManipulator(evt =>
             {
@@ -149,19 +152,48 @@ namespace BoardFlow.Editor.UI
                 m_DoubleClicked = true;
                 m_ClickTimer?.Pause();
                 OnTitleDoubleClicked?.Invoke(this);
+                evt.StopPropagation();
                 return;
             }
 
-            if (evt.clickCount == 1)
+            // Single click on title is handled by OnBodyClicked
+            // (the event bubbles up from title to body)
+        }
+
+        void OnBodyClicked(ClickEvent evt)
+        {
+            // Ignore double-clicks (handled by title for inline edit)
+            if (evt.clickCount == 2) return;
+
+            // Ignore clicks on interactive elements
+            if (evt.target is Toggle || evt.target is Button) return;
+
+            m_DoubleClicked = false;
+            var modifiers = EventModifiers.None;
+            if (evt.ctrlKey) modifiers |= EventModifiers.Control;
+            if (evt.shiftKey) modifiers |= EventModifiers.Shift;
+            m_ClickTimer = schedule.Execute(() =>
             {
-                m_DoubleClicked = false;
-                m_ClickTimer = schedule.Execute(() =>
-                {
-                    if (!m_DoubleClicked)
-                        OnCardClicked?.Invoke(this);
-                });
-                m_ClickTimer.ExecuteLater(300);
-            }
+                if (!m_DoubleClicked)
+                    OnCardClicked?.Invoke(this, modifiers);
+            });
+            m_ClickTimer.ExecuteLater(300);
+        }
+
+        public void SimulateClick(bool ctrl, bool shift)
+        {
+            var modifiers = EventModifiers.None;
+            if (ctrl) modifiers |= EventModifiers.Control;
+            if (shift) modifiers |= EventModifiers.Shift;
+            OnCardClicked?.Invoke(this, modifiers);
+        }
+
+        public void SetSelected(bool selected)
+        {
+            if (selected)
+                AddToClassList("task-card--selected");
+            else
+                RemoveFromClassList("task-card--selected");
         }
 
         public void SetColor(string color, CardColorMode mode)
